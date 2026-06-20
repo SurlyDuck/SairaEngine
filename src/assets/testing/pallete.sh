@@ -5,7 +5,7 @@
 
 set -x
 
-INFILE=./colors.txt
+INFILE=./data/colors.txt
 
 colors=()
 
