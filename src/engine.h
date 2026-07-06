@@ -1,7 +1,7 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
-#include "raylib.h"
-#include "raymath.h"
+#include "./include/raylib.h"
+#include "./include/raymath.h"
 #include <stdbool.h>
 #include <stdint.h>
 
