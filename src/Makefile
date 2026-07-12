@@ -4,7 +4,7 @@ CFLAGS:= -I -std=c11 -Wall -Wextra -pedantic
 LFLAGS_LINUX:= -L./lib_linux/ -lraylib -lm -lX11
 LFLAGS_WINDOWS:= -L./lib_win/ -lraylib -lm -lgdi32 -lwinmm
 GAME:= GameName
-GAME_FILES:= ./game/game.c
+GAME_FILES:= ./game/game.c ./game/characters.c
 ENGINE_FILES:= engine.c
 
 all: linux windows android run

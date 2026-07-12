@@ -1,0 +1,84 @@
+[Default]
+[granular_1_montage.png]
+[Defense_spear]
+frames = 4
+fps = 8
+[N]
+x = 0
+y = 0
+[S]
+x = 4
+y = 0
+[E]
+x = 0
+y = 1
+[W]
+x = 4
+y = 1
+[NE]
+x = 0
+y = 2
+[NW]
+x = 4
+y = 2
+[SE]
+x = 0
+y = 3
+[SW]
+x = 4
+y = 3
+[Idle_Spear]
+frames = 1
+fps = 8
+[N]
+x = 0
+y = 4
+[S]
+x = 1
+y = 4
+[E]
+x = 2
+y = 4
+[W]
+x = 3
+y = 4
+[NE]
+x = 4
+y = 4
+[NW]
+x = 5
+y = 4
+[SE]
+x = 6
+y = 4
+[SW]
+x = 7
+y = 4
+[Walking]
+frames = 8
+fps = 8
+[N]
+x = 0
+y = 5
+[S]
+x = 0
+y = 6
+[E]
+x = 0
+y = 7
+[W]
+x = 0
+y = 8
+[NE]
+x = 0
+y = 9
+[NW]
+x = 0
+y = 10
+[SE]
+x = 0
+y = 11
+[SW]
+x = 0
+y = 12
+[END]

@@ -1,0 +1,57 @@
+[john_doe_0]
+[file.png]
+[spear_defense]
+frames = 4
+fps = 8
+[SW]
+x = 0
+y = 0
+[N]
+x = 4
+y = 0
+[NE]
+x = 8
+y = 0
+[E]
+x = 1
+y = 1
+[SE]
+x = 5
+y = 1
+[S]
+x = 9
+y = 1
+[W]
+x = 2
+y = 2
+[NW]
+x = 6
+y = 2
+[spear_idle]
+frames = 1
+fps = 8
+[SW]
+x = 10
+y = 2
+[N]
+x = 0
+y = 3
+[NE]
+x = 1
+y = 3
+[E]
+x = 2
+y = 3
+[SE]
+x = 3
+y = 3
+[S]
+x = 4
+y = 3
+[W]
+x = 5
+y = 3
+[NW]
+x = 6
+y = 3
+[END]
