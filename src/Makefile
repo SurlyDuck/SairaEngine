@@ -1,28 +1,70 @@
-.PHONY: all run linux windows android clear
+.PHONY: all clear build run
+
+# Targets: LINUX, WINDOWS, ANDROID
+TARGET ?= LINUX
+
+PROJECT_NAME          ?= saira_template
+VERSION               ?= 0.0.1
+PROJECT_PATH          ?= ./game/
+LINUX_BIN_PATH        ?= ../bin/linux/
+WINDOWS_BIN_PATH      ?= ../bin/windows/
+
+# Build mode: DEBUG OR RELEASE
+BUILD_MODE ?= DEBUG
+
+# Default compiller: gcc
+CC ?= gcc
+
+ifeq ($(TARGET),WINDOWS)
+	CC = x86_64-w64-mingw32-cc
+	LFLAGS:= -L./lib_win/ -lraylib -lm -lgdi32 -lwinmm
+else 
+	LFLAGS:= -L./lib_linux/ -lraylib -lm -lX11
+endif
 
 CFLAGS:= -I -std=c11 -Wall -Wextra -pedantic
-LFLAGS_LINUX:= -L./lib_linux/ -lraylib -lm -lX11
-LFLAGS_WINDOWS:= -L./lib_win/ -lraylib -lm -lgdi32 -lwinmm
-GAME:= GameName
-GAME_FILES:= ./game/game.c ./game/characters.c
-ENGINE_FILES:= engine.c
 
-all: linux windows android run
+ifeq ($(BUILD_MODE),DEBUG)
+	CFLAGS:= -ggdb ${CFLAGS}
+endif
 
-linux:   ../bin/linux/$(GAME)
-windows: ../bin/windows/$(GAME).exe
-android: ../bin/android/$(GAME)
+# Objects files required
+# NOTE: If you create a new list remember to add to the ´build´ recipe
+ENGINE = \
+	saira.o \
+	animation.o
+
+GAME = \
+	./game/game.o \
+	./game/characters.o
+
+all: $(ENGINE) $(GAME) build
+
+%: %.c
+	$(CC) -c $<
+
+build: $(ENGINE) $(GAME)
+ifeq ($(TARGET),LINUX)
+	$(CC) $(CFLAGS) -o $(LINUX_BIN_PATH)$(PROJECT_NAME)$(VERSION) $? $(LFLAGS)
+	make run
+endif 
+ifeq ($(TARGET),WINDOWS)
+	$(CC) $(CFLAGS) -o $(WINDOWS_BIN_PATH)$(PROJECT_NAME)$(VERSION).exe $? $(LFLAGS)
+	make run TARGET=WINDOWS
+endif
+ifeq ($(TARGET),ANDROID)
+	echo "Android target not implemented yet."
+endif
+
 run:
-	../bin/linux/./$(GAME)
+ifeq ($(TARGET),LINUX)
+	$(LINUX_BIN_PATH)$(PROJECT_NAME)$(VERSION)
+endif 
+ifeq ($(TARGET),WINDOWS)
+	wine $(WINDOWS_BIN_PATH)$(PROJECT_NAME)$(VERSION).exe
+endif
 
-../bin/linux/$(GAME): $(GAME_FILES) $(ENGINE_FILES)
-	gcc $(CFLAGS) -o ../bin/linux/$(GAME) $(ENGINE_FILES) $(GAME_FILES) $(LFLAGS_LINUX)
+clear:
+	rm *.o
+	rm $(PROJECT_PATH)*.o
 
-../bin/windows/$(GAME).exe: $(GAME_FILES) $(ENGINE_FILES)
-	x86_64-w64-mingw32-cc $(CFLAGS) -o ../bin/windows/$(GAME).exe $(ENGINE_FILES) $(GAME_FILES) $(LFLAGS_WINDOWS)
-
-../bin/android/$(GAME): 
-	@echo "Android not implemented yet"
-
-clear: 
-	rm ../bin/linux/$(GAME) ../bin/windows/$(GAME).exe

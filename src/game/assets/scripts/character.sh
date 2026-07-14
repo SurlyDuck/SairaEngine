@@ -109,15 +109,16 @@ done
 
 echo "[END]" >> temp.data
 
-echo -n "animation title: "
+echo -n "Animation title: "
 read animationTitle
 if [[ $animationTitle == "" ]]; then 
-	animationTitle="[Default]"; 
+	animationTitle="Default"; 
+	echo -n "Default"
 else 
 	animationTitle="[$animationTitle]"
 fi
 
-sed -i "1i $animationTitle" temp.data
+sed -i "1i [$animationTitle]" temp.data
 
 declare -i finalWidth
 finalWidth=0
@@ -126,32 +127,30 @@ if [[ maxWidthReached -eq 1 ]]; then
 else
 	finalWidth=$x
 fi
-	y+=1
-	magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${regular_files[@]}" "$2/montage_no_pallete.png"
 
-	magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_1_files[@]}" "$2/granular_1_montage.png"
+y+=1
+magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${regular_files[@]}" "$2/$animationTitle""1.png"
+magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_1_files[@]}" "$2/$animationTitle""2.png"
+magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_2_files[@]}" "$2/$animationTitle""3.png"
+magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_3_files[@]}" "$2/$animationTitle""4.png"
 
-	magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_2_files[@]}" "$2/granular_2_montage.png"
-
-	magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_3_files[@]}" "$2/granular_3_montage.png"
-
-sed -i "2i"" [montage_no_pallete.png]" temp.data
-cp temp.data "$2/nopallete.data"
+sed -i "2i"" [$animationTitle""1.png]" temp.data
+cp temp.data "$2/$animationTitle""1.data"
 sed -i "2d" temp.data
-sed -i "2i"" [granular_1_montage.png]" temp.data
-cp temp.data "$2/granular1.data"
+sed -i "2i"" [$animationTitle""2.png]" temp.data
+cp temp.data "$2/$animationTitle""2.data"
 sed -i "2d" temp.data
-sed -i "2i"" [granular_2_montage.png]" temp.data
-cp temp.data "$2/granular2.data"
+sed -i "2i"" [$animationTitle""3.png]" temp.data
+cp temp.data "$2/$animationTitle""3.data"
 sed -i "2d" temp.data
-sed -i "2i"" [granular_3_montage.png]" temp.data
-cp temp.data "$2/granular3.data"
+sed -i "2i"" [$animationTitle""4.png]" temp.data
+cp temp.data "$2/$animationTitle""4.data"
 
 removeTemp="y"
-echo -n "remove temp files? (y/n)"
+echo "Remove temp files? (y/n)"
 read removeTemp
 
-if [[ "$removeTemp" == "n" ]]; then
+if [[ "$removeTemp" == "n" || "$removeTemp" == "N" ]]; then
 	exit 0
 else
 	rm temp.data
