@@ -18,9 +18,8 @@ typedef struct{
 	const char *sheetName;
 	const char *filePath;
 	const char *animName;
-	uint8*_t frames;
+	uint8_t frames;
 	uint8_t fps;
-	Vector2 sheetSize;
 	Vector2 n;
 	Vector2 s;
 	Vector2 e;
@@ -29,6 +28,7 @@ typedef struct{
 	Vector2 nw;
 	Vector2 se;
 	Vector2 sw;
+	Vector2 sheetSize;
 }animation;
 
 /********************************************* GAME *********************************************/
@@ -41,8 +41,7 @@ extern void UpdateGame(float fps);
 /******************************************** ENGINE ********************************************/
 extern void FillBackground(Color color);
 extern bool LoadAnimationSheets(const char **dataFile);
-extern animation GetAnimation(const char *sheetName);
-extern void PlayAnimation(animation anim, const char *animName, bool repeat, bool stack, Vector2 pos);
+extern void PlayAnimation(const char *sheetTitle, const char *animName, bool repeat, bool stack, Vector2 dir);
 
 /******************************************* ENGINE ********************************************/
 
