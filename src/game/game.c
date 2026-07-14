@@ -1,12 +1,13 @@
 #include "../saira.h"
 
-#define GAME_WIDTH  800
-#define GAME_HEIGHT 600
+#define GAME_WIDTH  512
+#define GAME_HEIGHT 288
 #define FPS         60
 
 static const char *animationFiles[] = {
 	"./game/assets/characters_sheet/char0/Default1.data",
 	"./game/assets/characters_sheet/char0/Default2.data",
+	NULL
 };
 
 game InitGame(){
