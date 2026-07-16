@@ -31,12 +31,55 @@ static bool AppendAnimation(){
 	return true;
 }
 
-static bool ParseAnimationData(FILE *data, const char *filePath){
-	//Break it into tokens first.
-	//[name] = identifier
-	//´value = a´ = variables
-	//after the first two identifiers, just iterate until you find [END]
+/* TODO: Move this into saira.h */
+#define DA_APPEND(item, array) do{ \
+	\
+}while(0)
 
+/* TODO: Maybe move all this into a parsing and tokenizer module */
+typedef enum{
+	definition = 0,
+	variable
+}token_type;
+
+typedef struct{
+	token_type type;
+	const char *text;
+}token;
+
+typedef struct{
+	token  *items;
+	size_t capacity;
+	size_t count;
+}tokens;
+
+static bool ParseAnimationData(FILE *data, const char *filePath){
+	bool onDefinition = false;
+	size_t line       = 1;
+	size_t cursor     = 1;
+	char c;
+	while(fread(&c, sizeof(char), 1, data)){
+		if(c == '['){
+			if(!onDefinition){
+				TraceLog(LOG_WARNING, "Found definition");
+				onDefinition = true;
+				continue;
+			}else {
+				TraceLog(LOG_ERROR, "Nested definitions not supported yet. %lu:%lu", line, cursor);
+				return false;
+			}
+		}else if(c == ']'){
+			if(!onDefinition){
+				TraceLog(LOG_ERROR, "Closing of unknown definition. %lu:%lu", line, cursor);
+				return false;
+			}else{
+				
+			}
+		}else{
+
+		}
+
+	}
 
 	return true;
 }
