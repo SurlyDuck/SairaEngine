@@ -5,8 +5,7 @@
 #define FPS         60
 
 static const char *animationFiles[] = {
-	"./game/assets/characters_sheet/char0/Default1.data",
-	"./game/assets/characters_sheet/char0/Default2.data",
+	"./game/assets/characters_sheet/char0/example.sgd",
 	NULL
 };
 

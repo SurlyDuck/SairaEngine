@@ -32,7 +32,8 @@ endif
 # NOTE: If you create a new list remember to add to the ´build´ recipe
 ENGINE = \
 	saira.o \
-	animation.o
+	sgd.o \
+	animation.o 
 
 GAME = \
 	./game/game.o \
