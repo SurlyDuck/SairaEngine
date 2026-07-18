@@ -26,6 +26,8 @@ CFLAGS:= -I -std=c11 -Wall -Wextra -pedantic
 
 ifeq ($(BUILD_MODE),DEBUG)
 	CFLAGS:= -ggdb ${CFLAGS}
+else
+	CFLAGS:= -s
 endif
 
 # Objects files required

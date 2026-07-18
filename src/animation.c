@@ -25,10 +25,19 @@ typedef struct{
 	size_t capacity;
 }animations;
 
-/*TODO: custom error messages */
-static bool ParseAnimationData(FILE *data, const char *filePath){
-	const char **rawTest = NULL;
-	tokens *allTokens = GetAllTokens(rawTest);
+static bool AppendAnimationsData(FILE *data, const char *filePath){
+	char *rawTest = NULL;
+	assert(fseek(data, 0, SEEK_END) == 0);
+	long fsize = ftell(data);
+	rawTest = (char*) malloc((fsize+1) * sizeof(char));
+	assert(rawTest != NULL);
+	rewind(data);
+	fread((void*)rawTest, sizeof(char), fsize, data);
+	rawTest[fsize] = '\0';
+	
+	//TraceLog(LOG_WARNING, "%s", rawTest);
+
+	tokens *allTokens = GetAllTokens( (const char*) rawTest);
 	nodes nodesArray = ParseTokens(allTokens);
 	animations animationsArray = {};
 	if (nodesArray.count != 0){
@@ -63,7 +72,7 @@ bool LoadAnimationData(const char **dataFile){
 			return false;		
 		}
 		
-		if(!ParseAnimationData(data, dataFile[i])){
+		if(!AppendAnimationsData(data, dataFile[i])){
 			TraceLog(LOG_ERROR, "Couldn't parse animation data file %s", dataFile[i]);
 			return false;		
 		}
