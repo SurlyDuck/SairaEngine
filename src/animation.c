@@ -25,7 +25,7 @@ typedef struct{
 	size_t capacity;
 }animations;
 
-static bool AppendAnimationsData(FILE *data, const char *filePath){
+static bool AppendAnimationsData(FILE *data){
 	char *rawTest = NULL;
 	assert(fseek(data, 0, SEEK_END) == 0);
 	long fsize = ftell(data);
@@ -41,22 +41,25 @@ static bool AppendAnimationsData(FILE *data, const char *filePath){
 	nodes nodesArray = ParseTokens(allTokens);
 	animations animationsArray = {};
 	if (nodesArray.count != 0){
+		if(nodesArray.items[0].childrenCount == 0 || nodesArray.items[0].constantCount == 0){
+			TraceLog(LOG_ERROR, "Parser returned invalid data from animation file");
+		  	return false;
+		}
 		animation newAnim = {};
 		/* nodesArray.items[0] = root */
 		newAnim.sheetName = nodesArray.items[0].name; 
-		newAnim.filePath  = nodesArray.items[0].constants[0]->name;
+		newAnim.filePath  = nodesArray.items[0].constants[0].name;
 		
-		if(nodesArray.items[0].childrenCount == 0) return false;
 
 		for(size_t i = 0; i < nodesArray.items[0].childrenCount; ++i){
-			if(strcmp(nodesArray.items[0].children[i]->name, "animation") == 0){
+			if(strcmp(nodesArray.items[0].children[i].name, "animation") == 0){
 				/* create new animation here */
 				/* ...items[0].children[i]->constants[0]->name == ´name´  */
 				/* ...items[0].children[i]->constants[1]->name == ´frames´  */
 			}
 		}
 	}else{
-		TraceLog(LOG_ERROR, "Parser for animation data file did not return any data!");
+		TraceLog(LOG_ERROR, "Parser for animation data file did not return any data.");
 		return false;
 	}
 	
@@ -72,7 +75,7 @@ bool LoadAnimationData(const char **dataFile){
 			return false;		
 		}
 		
-		if(!AppendAnimationsData(data, dataFile[i])){
+		if(!AppendAnimationsData(data)){
 			TraceLog(LOG_ERROR, "Couldn't parse animation data file %s", dataFile[i]);
 			return false;		
 		}

@@ -10,16 +10,16 @@
 #include <assert.h>
 #include <errno.h>
 
-#define DA_APPEND(item, array) do{ \
+#define DA_APPEND(item, array) do{\
 	if(array.count == 0){\
-		array.items = (item*) malloc(sizeof(item));\
+		array.items = (void*) malloc(sizeof(item));\
 		assert(array.items != NULL); \
-	}else if(array.capacity < sizeof(item) * (array.count+1)){ \
-		array.items = (item*) realloc(array.items, sizeof(item) * (array.item + 1));\
+	}else if(array.capacity < sizeof(item) * (size_t)(array.count+1)){\
+		array.items = (void*) realloc(array.items, sizeof(item) * (size_t)(array.count + 1));\
 	}\
 	array.items[array.count] = item;\
 	array.count++;\
-	array.capacity = sizeof(token) * array->count;\
+	array.capacity = sizeof(item) * array.count;\
 }while(0)
 
 typedef struct {
@@ -56,8 +56,8 @@ struct node{
 	const char *name;
 	size_t childrenCount;
 	size_t constantCount;
-	constant **constants;
-	node **children;
+	constant *constants;
+	node *children;
 };
 
 typedef struct{
@@ -73,6 +73,8 @@ typedef struct{
 	size_t capacity;
 }tokens;
 
+/* Warning: calling GetAllTokens() will change some values from nodes in the node array. */
+/* Only call it after you've already used the node tree returned by ParseTokens()        */
 extern tokens *GetAllTokens(const char *raw);
 extern nodes  ParseTokens(tokens *allTokens);
 

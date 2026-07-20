@@ -6,6 +6,9 @@
 #define COMMENT   '#'
 #define EQUAL     '='
 #define TOKEN_MAX_LEN 256
+#define VERSION "1.0.0" /* using SemVer. Can only parse files at the same major version */
+#define OPEN_SIGNATURE  "[SGD]"
+#define CLOSE_SIGNATURE "[/SGD]"
 
 typedef enum{
 	OLABEL = 0,
@@ -16,7 +19,7 @@ typedef enum{
 }token_type;
 
 struct token{
-	const char *val;
+	char *val;
 	uint8_t valCount;
 	token_type type;
 };
@@ -33,33 +36,20 @@ static inline bool isTokenTextValid(char *text){
 	return true;
 }
 
-void DA_APPEND2(token t, tokens *array){
-	if(array->count == 0){
-		array->items = (token*) malloc(sizeof(token));
-		assert(array->items != NULL);
-	}else if(array->capacity < sizeof(token) * (array->count+1)){
-		array->items = (token*) realloc(array->items, sizeof(token) * (array->count + 1));
-	}
-	
-	array->items[array->count] = t;
-	array->count++;
-	array->capacity = sizeof(token) * array->count;
-}
-
 typedef enum{
 	FETCHING,
 	IGNORING,
 	APPENDING,
 	APPENDING_STRING
 }status;
-static tokens tokensArray  = {};
-static tokens tokensArrayTest  = {};
 static status tokenStatus = FETCHING;
 token currentToken = {};
 
 tokens *GetAllTokens(const char *raw){
+	static tokens tokensArray  = {};
 	tokenStatus = FETCHING;
 	if(tokensArray.count > 0){
+		/*TODO: also free each token.val you allocated with *ptr */
 		free(tokensArray.items);
 		tokensArray = (tokens){0};
 	}
@@ -104,14 +94,14 @@ tokens *GetAllTokens(const char *raw){
 			}else if(isTokenTextValid(tokenText) || tokenText[0] == '"'){
 				tokenType = VALUE;
 			}else tokenType = INVALID;
-			const char *ptr = malloc(sizeof(char) * (tokenTextSize+1));
+			char *ptr = malloc(sizeof(char) * (tokenTextSize+1));
 			ptr = memcpy((void*)ptr, tokenText, tokenTextSize+1);		
 			token newToken = {
 				.val = ptr,
 				.valCount = tokenTextSize,
 				.type = tokenType};
 			
-			DA_APPEND2(newToken, &tokensArrayTest);
+			DA_APPEND(newToken, tokensArray);
 			tokenStatus = FETCHING;
 			memset(tokenText, '\0', TOKEN_MAX_LEN);
 			tokenTextCursor = 0;
@@ -122,13 +112,122 @@ tokens *GetAllTokens(const char *raw){
 			tokenTextSize++;
 			continue;
 		}
-			
 	}
 	
 	return &tokensArray;
 }
 
-nodes b = {};
+static token NextToken(tokens *allTokens, size_t *ptr){
+	token t = (token){};
+	if(*ptr >= allTokens->count){
+		*ptr = *ptr + 1;
+		t.type = INVALID;
+		return t;
+	}
+	
+	t = allTokens->items[*ptr];
+	*ptr = *ptr + 1;
+	return  t;
+}
+
+static void ClearTokenName(token *t){
+	/* clearing only opening label tokens for now */
+	/* TODO: more types of tokens and whitespace the lexer may have let pass */
+	for(int i = 1; i < t->valCount; ++i) t->val[i-1] = t->val[i];
+	t->val[t->valCount-2]= '\0';
+	t->valCount -= 2;
+}
+
+/*
+struct node{
+	const char *name;
+	size_t childrenCount;
+	size_t constantCount;
+	constant *constants;
+	node *children;
+};*/
+
+node CreateNode(token nodeToken, node *parentNode, nodes *nodeArray){
+	node newNode = {0};
+	ClearTokenName(&nodeToken);
+	newNode.name = nodeToken.val; /* when GetAllTokens() is called this may be gone. */
+	if(parentNode == NULL){
+		/* create a root node */
+		newNode.children = NULL;
+		DA_APPEND(newNode, (*nodeArray));
+		return newNode;
+	}
+
+	if(parentNode->childrenCount == 0){
+		parentNode->children = (node*) malloc(sizeof(newNode));
+	}else{
+		parentNode->children = (node*) realloc(parentNode->children, sizeof(newNode) * (parentNode->childrenCount + 1));
+	}
+	parentNode->children[parentNode->childrenCount] = newNode;
+	parentNode->childrenCount+=1;
+	DA_APPEND(newNode, (*nodeArray));
+
+	return newNode;
+}
+
 nodes ParseTokens(tokens *allTokens){
-	return b;
+	static nodes nodesArray = {};
+	if(nodesArray.count > 0){
+		free(nodesArray.items);
+		nodesArray = (nodes){0};
+	}
+	size_t ptr = 0;
+	/* signature validation */
+	if(strcmp(NextToken(allTokens, &ptr).val,OPEN_SIGNATURE) == 0){
+		char *fileVersion = "0.0.0";
+		token t = {0};
+		for(;;){
+			t = NextToken(allTokens, &ptr);
+			if(strcmp(t.val, CLOSE_SIGNATURE) == 0 || t.type == INVALID) break;
+			if(strcmp(t.val, "version") == 0){
+				NextToken(allTokens, &ptr);
+				fileVersion = (char*) NextToken(allTokens, &ptr).val;
+			} 
+		} 
+		
+		if(strcmp(t.val, CLOSE_SIGNATURE) != 0){
+			TraceLog(LOG_ERROR, "Signature not closed.");
+			return nodesArray;
+		}
+		if(fileVersion[0] != VERSION[0]){
+			TraceLog(LOG_ERROR, "Wrong or missing version. Wanted  <%s>, found <%s>.", VERSION, fileVersion);
+			return nodesArray;
+		}
+	}else{
+		TraceLog(LOG_WARNING, "No token signature found %s", OPEN_SIGNATURE);
+		return nodesArray;
+	}
+	/* end of signature validation */
+	
+	token rootToken = NextToken(allTokens, &ptr);
+	if(rootToken.type != OLABEL){
+		TraceLog(LOG_ERROR, "No root found after signature!");
+		return nodesArray;
+	}
+	node rootNode = CreateNode(rootToken, NULL, &nodesArray);
+	long long lastNode = nodesArray.count-1;
+
+	token t;
+	while((t = NextToken(allTokens, &ptr)).type != INVALID){
+		if (t.type == OLABEL) {
+			CreateNode(t, &nodesArray.items[lastNode], &nodesArray);	
+			lastNode = nodesArray.count-1;
+		}else if (t.type == CLABEL && !(ptr >= allTokens->count)){
+			lastNode--;
+			if(lastNode < 0 ){
+				TraceLog(LOG_ERROR, "Unbalanced labels");
+				free(nodesArray.items);
+				nodesArray = (nodes){0};
+				return nodesArray;
+			}
+		}
+
+	}
+	nodesArray = (nodes){0};
+	return nodesArray;
 }

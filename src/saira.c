@@ -6,7 +6,9 @@
 int main(){
 	game gameEnv = InitGame();
 	/* resource loading */	
-	LoadAnimationData(gameEnv.animationsDataPath);
+	if(!LoadAnimationData(gameEnv.animationsDataPath)){
+		TraceLog(LOG_ERROR, "Couldn't load animation data into memory. Some textures may not work.");
+	}
 	
 	SetTargetFPS(gameEnv.fps);
 	InitWindow(gameEnv.width, gameEnv.height, gameEnv.title);
