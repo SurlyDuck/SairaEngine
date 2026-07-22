@@ -18,6 +18,7 @@ typedef enum{
 	INVALID
 }token_type;
 
+/* TODO: token line and column */
 struct token{
 	char *val;
 	uint8_t valCount;
@@ -132,6 +133,15 @@ static token NextToken(tokens *allTokens, size_t *ptr){
 	return  t;
 }
 
+static token GetExpectToken(token_type expectedType, tokens *allTokens, size_t *ptr){
+	token t = NextToken(allTokens, ptr);
+	if(t.type != expectedType){
+		t.type = INVALID;
+		return t;
+	}
+
+	return t;
+}
 static void ClearTokenName(token *t){
 	/* clearing only opening label tokens for now */
 	/* TODO: more types of tokens and whitespace the lexer may have let pass */
@@ -141,19 +151,31 @@ static void ClearTokenName(token *t){
 }
 
 bool CreateNode(token nodeToken, size_t *arrayPtr, int parent, node nodeArray[]){
-	if(arrayPtr >= (sizeof(nodeArray)/sizeof(nodesArray[0]))) return false;
+	if(*arrayPtr >= 1024) return false; /*TODO: magic number */
 
 	node newNode = {0};
 	ClearTokenName(&nodeToken);
 	newNode.name = nodeToken.val; /* when GetAllTokens() is called this may be gone. */
 	if(parent == -1){ /* root node */
-		nodesArray[arrayPtr++] = newNode;
+		nodeArray[*arrayPtr] = newNode;
+		*arrayPtr = *arrayPtr + 1;
 		return true;
 	}
-	
+
+	nodeArray[*arrayPtr] = newNode;
+
 	if(nodeArray[parent].childrenCount == 0){
-		
+		/* TODO: magic number */
+		/* TODO: I think I can use realloc here just fine and only alloc enough memory */
+		nodeArray[parent].children = (node**) malloc(sizeof(void*) * 1024);
+		nodeArray[parent].children[nodeArray[parent].childrenCount] = &nodeArray[*arrayPtr];
+		nodeArray[parent].childrenCount += 1;
+	}else{
+		nodeArray[parent].children[nodeArray[parent].childrenCount] = &nodeArray[*arrayPtr];
+		nodeArray[parent].childrenCount += 1;
 	}
+
+	*arrayPtr = *arrayPtr + 1;
 
 	return true;
 }
@@ -198,24 +220,49 @@ nodes ParseTokens(tokens *allTokens){
 		return nodesArray;
 	}
 	
+	typedef struct{
+		size_t *items;
+		size_t count;
+		size_t capacity;
+	}stack;
+	
+	/* TODO: magic number */
 	static node allNodes[1024] = {0};
-	size_t nodesPtr = 0;
-	CreateNode(rootToken, &nodesPtr, allNodes);
+	static stack labelStack    = {0};
+	size_t nodesPtr            = 0;
+	size_t               depth = 0;
 
-	int depth = 0;
+	CreateNode(rootToken, &nodesPtr, -1, allNodes);
+	DA_PUSH(nodesPtr-1, labelStack);
+
 	token t;
 	while((t = NextToken(allTokens, &ptr)).type != INVALID){
 		if (t.type == OLABEL) {
+			size_t parentIndex = labelStack.items[labelStack.count-1];
+			CreateNode(t, &nodesPtr, parentIndex, allNodes);
 			depth++;
+			DA_PUSH(nodesPtr-1, labelStack);
 		}else if (t.type == CLABEL && !(ptr >= allTokens->count)){
 			depth--;
-			if(depth < 0 ){
-				TraceLog(LOG_ERROR, "Unbalanced labels");
-				free(nodesArray.items);
-				nodesArray = (nodes){0};
+			if(depth > 1024 ){
+				TraceLog(LOG_ERROR, "Unbalanced or overflow labels");
 				return nodesArray;
-			}	
-
+			}
+			DA_POP(labelStack);
+		}else if(t.type == VALUE){
+			const char *constantName = t.val;
+			if((t = GetExpectToken(ASSIGMENT, allTokens, &ptr)).type != INVALID){
+				if((t = GetExpectToken(VALUE, allTokens, &ptr)).type != INVALID){
+					/*TODO: append constant to current node on stack */
+					const char *constantVal = t.val;
+					constant c = {
+						.name   = constantName,
+						.value  = constantVal
+					};
+					continue; 
+				}
+			}
+			TraceLog(LOG_ERROR, "wrong definition of constant <%s>",t.val); 
 		}else continue;
 	}
 	nodesArray = (nodes){0};
