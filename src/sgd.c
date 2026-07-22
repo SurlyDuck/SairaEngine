@@ -27,9 +27,7 @@ struct token{
 static inline bool isTokenTextValid(char *text){
 	uint8_t i = 0;
 	while(text[i] != '\0'){
-		if(!(text[i] >= 'a' && text[i] <= 'z') && !(text[i] >= '0' && text[i] <= '9')){
-			return false;
-		}
+		if(text[i] <= 44) return false;
 		i++;
 	}
 
@@ -106,6 +104,10 @@ tokens *GetAllTokens(const char *raw){
 			memset(tokenText, '\0', TOKEN_MAX_LEN);
 			tokenTextCursor = 0;
 			tokenTextSize   = 0;
+			
+			/* a bracket ended the current token instead of whitespace. Must add this bracket to the next token. */
+			if(LABEL(c) && (newToken.type != OLABEL && newToken.type != CLABEL))
+				cursor--; 
 		}else{
 			tokenText[tokenTextCursor] = c;
 			tokenTextCursor++;
@@ -138,36 +140,22 @@ static void ClearTokenName(token *t){
 	t->valCount -= 2;
 }
 
-/*
-struct node{
-	const char *name;
-	size_t childrenCount;
-	size_t constantCount;
-	constant *constants;
-	node *children;
-};*/
+bool CreateNode(token nodeToken, size_t *arrayPtr, int parent, node nodeArray[]){
+	if(arrayPtr >= (sizeof(nodeArray)/sizeof(nodesArray[0]))) return false;
 
-node CreateNode(token nodeToken, node *parentNode, nodes *nodeArray){
 	node newNode = {0};
 	ClearTokenName(&nodeToken);
 	newNode.name = nodeToken.val; /* when GetAllTokens() is called this may be gone. */
-	if(parentNode == NULL){
-		/* create a root node */
-		newNode.children = NULL;
-		DA_APPEND(newNode, (*nodeArray));
-		return newNode;
+	if(parent == -1){ /* root node */
+		nodesArray[arrayPtr++] = newNode;
+		return true;
+	}
+	
+	if(nodeArray[parent].childrenCount == 0){
+		
 	}
 
-	if(parentNode->childrenCount == 0){
-		parentNode->children = (node*) malloc(sizeof(newNode));
-	}else{
-		parentNode->children = (node*) realloc(parentNode->children, sizeof(newNode) * (parentNode->childrenCount + 1));
-	}
-	parentNode->children[parentNode->childrenCount] = newNode;
-	parentNode->childrenCount+=1;
-	DA_APPEND(newNode, (*nodeArray));
-
-	return newNode;
+	return true;
 }
 
 nodes ParseTokens(tokens *allTokens){
@@ -209,24 +197,26 @@ nodes ParseTokens(tokens *allTokens){
 		TraceLog(LOG_ERROR, "No root found after signature!");
 		return nodesArray;
 	}
-	node rootNode = CreateNode(rootToken, NULL, &nodesArray);
-	long long lastNode = nodesArray.count-1;
+	
+	static node allNodes[1024] = {0};
+	size_t nodesPtr = 0;
+	CreateNode(rootToken, &nodesPtr, allNodes);
 
+	int depth = 0;
 	token t;
 	while((t = NextToken(allTokens, &ptr)).type != INVALID){
 		if (t.type == OLABEL) {
-			CreateNode(t, &nodesArray.items[lastNode], &nodesArray);	
-			lastNode = nodesArray.count-1;
+			depth++;
 		}else if (t.type == CLABEL && !(ptr >= allTokens->count)){
-			lastNode--;
-			if(lastNode < 0 ){
+			depth--;
+			if(depth < 0 ){
 				TraceLog(LOG_ERROR, "Unbalanced labels");
 				free(nodesArray.items);
 				nodesArray = (nodes){0};
 				return nodesArray;
-			}
-		}
+			}	
 
+		}else continue;
 	}
 	nodesArray = (nodes){0};
 	return nodesArray;

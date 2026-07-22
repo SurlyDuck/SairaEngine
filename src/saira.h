@@ -22,6 +22,17 @@
 	array.capacity = sizeof(item) * array.count;\
 }while(0)
 
+#define DA_PUSH DA_APPEND
+
+#define DA_POP(array) do{\
+	size_t itemCap = sizeof(array.items[0]);\
+	array.count -= 1;\
+	array.capacity -= itemCap; \
+	if(array.count > 0) \
+		array.items = (void*) realloc(array.items, itemCap * array.count);\
+	else free(array.items);\
+}while(0)
+
 typedef struct {
 	uint16_t    width;
 	uint16_t    height;
@@ -57,7 +68,7 @@ struct node{
 	size_t childrenCount;
 	size_t constantCount;
 	constant *constants;
-	node *children;
+	node **children;
 };
 
 typedef struct{

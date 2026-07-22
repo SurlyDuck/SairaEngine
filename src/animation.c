@@ -52,7 +52,7 @@ static bool AppendAnimationsData(FILE *data){
 		
 
 		for(size_t i = 0; i < nodesArray.items[0].childrenCount; ++i){
-			if(strcmp(nodesArray.items[0].children[i].name, "animation") == 0){
+			if(strcmp(nodesArray.items[0].children[i]->name, "animation") == 0){
 				/* create new animation here */
 				/* ...items[0].children[i]->constants[0]->name == ´name´  */
 				/* ...items[0].children[i]->constants[1]->name == ´frames´  */
