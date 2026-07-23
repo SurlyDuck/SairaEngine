@@ -4,14 +4,15 @@
 intro     = "Saíra Game Data text format"
 version   = 1.0.0
 context   = "Character Sheet data"
+printme   = false
 [/SGD]
 [default]
-	file = Default1.png
+	file = ./game/assets/characters_sheet/char0/Default1.png
 	[animation]
 		name = Defense_spear
 		frames = 4
 		fps = 8
-		[N]x = 0  y = 0[/N]
+		[N]x = 69  y = 420[/N]
 		[S]x = 4  y = 0[/S]
 		[E]x = 0  y = 1[/E]
 		[W]x = 4  y = 1[/W]

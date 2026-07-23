@@ -41,6 +41,12 @@ typedef struct {
 	const char **animationsDataPath;
 }game;
 
+typedef struct {
+	void  **items;
+	size_t count;
+	size_t capacity;
+}ptr_da;
+
 /********************************************* GAME *********************************************/
 extern game InitGame();
 extern void UpdateGame(float fps);
@@ -67,15 +73,9 @@ struct node{
 	const char *name;
 	size_t childrenCount;
 	size_t constantCount;
-	constant *constants;
+	constant **constants;
 	node **children;
 };
-
-typedef struct{
-	node *items;
-	size_t count;
-	size_t capacity;
-}nodes;
 
 typedef struct token token;
 typedef struct{
@@ -84,9 +84,9 @@ typedef struct{
 	size_t capacity;
 }tokens;
 
-/* Warning: calling GetAllTokens() will change some values from nodes in the node array. */
-/* Only call it after you've already used the node tree returned by ParseTokens()        */
 extern tokens *GetAllTokens(const char *raw);
-extern nodes  ParseTokens(tokens *allTokens);
+extern node   *ParseTokens(tokens *allTokens);
+extern ptr_da GetNodes(const char *nodeName, node *searchArray);
+extern const char *GetConstantValue(node *searchNode, const char *constantName);
 
 #endif //_ENGINE_H
