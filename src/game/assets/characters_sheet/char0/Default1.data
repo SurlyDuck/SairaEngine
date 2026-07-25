@@ -6,7 +6,7 @@ version = 1.0.0
 context = "Character sheet data "
 [/SGD]
 [Default]
-file = ./game/assets/characters_sheet/char0/Default4.png
+file = ./game/assets/characters_sheet/char0/Default1.png
 [animation]
 name = Defense_spear
 frames = 4
