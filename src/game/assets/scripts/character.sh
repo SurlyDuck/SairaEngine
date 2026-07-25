@@ -1,4 +1,5 @@
 #!/bin/bash
+#TODO: indentation
 
 if [[ "$#" < 3 ]]; then
 	echo "Usage: /directory_containing_images /output_directory /pallete.png [OPTIONAL] fps"
@@ -155,16 +156,16 @@ magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""
 #maybe ask for the user at the end the full path? If I move the level of the directory I store shit, it wont work.
 outputDir=$(readlink -f "$2/$animationTitle""1.png" | cut -d/ -f7-10)
 sed -i "9i"" file = ./$outputDir/$animationTitle""1.png" temp.data
-cp temp.data "$2/$animationTitle""1.data"
+cp temp.data "$2/$animationTitle""1.sgd"
 sed -i "9d" temp.data
 sed -i "9i"" file = ./$outputDir/$animationTitle""2.png" temp.data
-cp temp.data "$2/$animationTitle""2.data"
+cp temp.data "$2/$animationTitle""2.sgd"
 sed -i "9d" temp.data
 sed -i "9i"" file = ./$outputDir/$animationTitle""3.png" temp.data
-cp temp.data "$2/$animationTitle""3.data"
+cp temp.data "$2/$animationTitle""3.sgd"
 sed -i "9d" temp.data
 sed -i "9i"" file = ./$outputDir/$animationTitle""4.png" temp.data
-cp temp.data "$2/$animationTitle""4.data"
+cp temp.data "$2/$animationTitle""4.sgd"
 
 removeTemp="y"
 echo -n "Remove temp files? (y/n): "

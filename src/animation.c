@@ -65,11 +65,12 @@ static bool AppendAnimationsData(FILE *data){
 			newAnim.fps                = (uint8_t) strtoull(GetConstantValue(nodeAnim, "fps"), NULL, 10);
 			newAnim.SpriteSheetTexture = animationTexture;
 			newAnim.sheetSize          = (Vector2) {animationTexture.width, animationTexture.height};
+			
 			if(nodeAnim->childrenCount != 8){
 				TraceLog(LOG_ERROR, "Each animation needs 8 coordinates");
 				return false;
 			}
-			
+			TraceLog(LOG_ERROR, "%f %f", newAnim.sheetSize.x, newAnim.sheetSize.y);
 			/* N, S, E, W, NE, NW, SE, SW coordinates */
 			newAnim.n.x  = strtoull(GetConstantValue(nodeAnim->children[0], "x"), NULL, 10);
 			newAnim.n.y  = strtoull(GetConstantValue(nodeAnim->children[0], "y"), NULL, 10);
