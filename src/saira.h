@@ -10,6 +10,9 @@
 #include <assert.h>
 #include <errno.h>
 
+//------------------------------------------------------------------------------------
+// Macros and types for dealing with dynamic arrays
+//------------------------------------------------------------------------------------
 #define DA_APPEND(item, array) do{\
 	if(array.count == 0){\
 		array.items = (void*) malloc(sizeof(item));\
@@ -34,6 +37,13 @@
 }while(0)
 
 typedef struct {
+	void  **items;
+	size_t count;
+	size_t capacity;
+}ptr_da;
+
+// Game data for each game
+typedef struct {
 	uint16_t    width;
 	uint16_t    height;
 	uint8_t     fps;
@@ -41,28 +51,33 @@ typedef struct {
 	const char **animationsDataPath;
 }game;
 
-typedef struct {
-	void  **items;
-	size_t count;
-	size_t capacity;
-}ptr_da;
+// The background color used for every sprite
+#define TRANSPARENT GetColor(0xFE01FDFF)
 
-/********************************************* GAME *********************************************/
+//------------------------------------------------------------------------------------
+// Functions each game must implement
+//------------------------------------------------------------------------------------
 extern game InitGame();
-extern void UpdateGame(float fps);
+extern void UpdateDrawGame(float fps);
 
-
-/******************************************** ENGINE ********************************************/
+//------------------------------------------------------------------------------------
+// Below this point only functions and types implemented by the engine
+//------------------------------------------------------------------------------------
 extern void FillBackground(Color color);
 
-
-/* ------- Saíra animation system ------- */
-typedef struct animation animation;
-extern void PlayAnimation(const char *sheetTitle, const char *animName, bool repeat, bool stack, Vector2 dir);
+//------------------------------------------------------------------------------------
+// Animation system 
+//------------------------------------------------------------------------------------
+extern void PlayAnimation(const char *sheetName, const char *animName, bool repeat, size_t animID, bool stack, 
+Vector2 dir, Vector2 pos);
+extern void DrawAllAnimations();
 extern bool LoadAnimationData(const char **dataFile);
+extern bool IsAnimationPlaying(const char *sheetName, const char *animName, size_t animID);
+extern size_t GetNewAnimation();
 
-/* ------- sgd parsing library -------*/
-
+//------------------------------------------------------------------------------------
+// Functions and types for tokenizing and parsing of .sgd files
+//------------------------------------------------------------------------------------
 typedef struct{
 	const char *name;
 	const char *value;

@@ -44,7 +44,7 @@ static inline bool isTokenTextValid(char *text){
 	return true;
 }
 
-/*TODO: hash table */
+/*TODO: use hash for searching */
 ptr_da GetNodes(const char *nodeName, node *searchArray){
 	ptr_da resultArray = {0};
 	
@@ -280,6 +280,8 @@ node *ParseTokens(tokens *allTokens){
 	}
 	/* end of signature validation */
 	
+	/* TODO: hash table */
+
 	token rootToken = NextToken(allTokens, &tokenPtr);
 	if(rootToken.type != OLABEL){
 		TraceLog(LOG_ERROR, "No root found after signature!");
@@ -294,7 +296,7 @@ node *ParseTokens(tokens *allTokens){
 	
 	static stack labelStack            = {0};
 	size_t depth                       = 0;
-
+	
 	if(!CreateNode(rootToken, &nodePtr, -1, allNodes)){
 		TraceLog(LOG_ERROR, "Failure during creation of root node");
 		return NULL;

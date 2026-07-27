@@ -1,14 +1,25 @@
 #include "../saira.h"
+#include "characters.h"
 
-#define GAME_WIDTH  512
-#define GAME_HEIGHT 288
+#define GAME_WIDTH  768
+#define GAME_HEIGHT 432
 #define FPS         60
 
+typedef enum{
+	NONE = 0,
+	MENU,
+	EXPEDITION,
+	EXITING
+}game_state;
+
+game_state currentGameState = NONE;
+
 static const char *animationFiles[] = {
-	"./game/assets/characters_sheet/char0/Default1.sgd",
-	"./game/assets/characters_sheet/char0/Default2.sgd",
+	"./game/assets/characters_sheet/char0/Default3.sgd",
 	NULL
 };
+
+game_state UpdateDrawState();
 
 game InitGame(){
 	return (game) {
@@ -19,7 +30,31 @@ game InitGame(){
 		.animationsDataPath = animationFiles};
 }
 
-void UpdateGame(float fps){
+void UpdateDrawGame(float fps){
+	game_state newState = UpdateDrawState();
+	if(newState == currentGameState) return;
 
-
+	switch(newState){
+		case EXPEDITION:{
+			InitCharacters();
+			currentGameState = newState;
+			break;
+		}
+		default: break;
+	}
 }
+
+game_state UpdateDrawState(){
+	switch(currentGameState){
+		case NONE: return EXPEDITION; /* game first state */
+		case MENU: return EXPEDITION; /* TODO */
+		case EXPEDITION:{
+			UpdateCharacters();
+			
+			DrawAllAnimations();
+			return EXPEDITION;
+		}
+		default: break;
+	}
+}
+

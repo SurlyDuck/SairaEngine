@@ -15,10 +15,14 @@ int main(){
 	SetTargetFPS(gameEnv.fps);
 	while(!WindowShouldClose()){
 		BeginDrawing();
-		ClearBackground(RED);
+		ClearBackground(WHITE);
+
+		UpdateDrawGame(GetFrameTime());
 		EndDrawing();
 	
 	}
+
+	CloseWindow();
 
 	return 0;
 }
