@@ -19,7 +19,7 @@ static const char *animationFiles[] = {
 	NULL
 };
 
-game_state UpdateDrawState();
+game_state UpdateDrawState(float deltaTime);
 
 game InitGame(){
 	return (game) {
@@ -30,8 +30,8 @@ game InitGame(){
 		.animationsDataPath = animationFiles};
 }
 
-void UpdateDrawGame(float fps){
-	game_state newState = UpdateDrawState();
+void UpdateDrawGame(float deltaTime){
+	game_state newState = UpdateDrawState(deltaTime);
 	if(newState == currentGameState) return;
 
 	switch(newState){
@@ -44,17 +44,19 @@ void UpdateDrawGame(float fps){
 	}
 }
 
-game_state UpdateDrawState(){
+game_state UpdateDrawState(float deltaTime){
 	switch(currentGameState){
 		case NONE: return EXPEDITION; /* game first state */
 		case MENU: return EXPEDITION; /* TODO */
 		case EXPEDITION:{
-			UpdateCharacters();
+			UpdateCharacters(deltaTime);
 			
-			DrawAllAnimations();
+			DrawAllAnimationContainers();
 			return EXPEDITION;
 		}
 		default: break;
 	}
+	
+	return NONE;
 }
 

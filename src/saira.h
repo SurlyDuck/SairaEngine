@@ -54,26 +54,56 @@ typedef struct {
 // The background color used for every sprite
 #define TRANSPARENT GetColor(0xFE01FDFF)
 
+// 8 Directions every graphic object may face
+enum{
+	NORTH = 0,      
+	SOUTH,      
+	EAST,      
+	WEST,      
+	NORTHEAST,  
+	NORTHWEST,  
+	SOUTHEAST,  
+	SOUTHWEST  
+};
+
+// 8 Directions every graphic object may face as a 2d vector
+#define NORTH_VEC     (Vector2){0, -1}
+#define SOUTH_VEC     (Vector1){0,  0}
+#define EAST_VEC      (Vector2){1,  0}
+#define WEST_VEC      (Vector2){-1, 0}
+#define NORTHEAST_VEC (Vector2){1, -1}
+#define NORTHWEST_VEC (Vector2){-1,-1}
+#define SOUTHEAST_VEC (Vector2){1,  1}
+#define SOUTHWEST_VEC (Vector2){-1, 1}
+
 //------------------------------------------------------------------------------------
 // Functions each game must implement
 //------------------------------------------------------------------------------------
 extern game InitGame();
-extern void UpdateDrawGame(float fps);
+extern void UpdateDrawGame(float deltaTime);
 
 //------------------------------------------------------------------------------------
 // Below this point only functions and types implemented by the engine
 //------------------------------------------------------------------------------------
 extern void FillBackground(Color color);
+extern int GetDirectionFromVector(Vector2 vec);
 
 //------------------------------------------------------------------------------------
 // Animation system 
 //------------------------------------------------------------------------------------
-extern void PlayAnimation(const char *sheetName, const char *animName, bool repeat, size_t animID, bool stack, 
-Vector2 dir, Vector2 pos);
-extern void DrawAllAnimations();
+typedef struct ANIMATION_CONTAINER ANIMATION_CONTAINER;
+extern void DrawAllAnimationContainers();
+extern void SetAnimation(ANIMATION_CONTAINER *container, const char *sheetName, const char *animName, bool repeat);
+extern void SetAnimationFrame(ANIMATION_CONTAINER *container, size_t frame);
+extern void SetAnimationVisibility(ANIMATION_CONTAINER *container, bool visible);
+extern void PlayAnimation(ANIMATION_CONTAINER *container, bool repeat);
+extern void MoveAnimation(ANIMATION_CONTAINER *container, Vector2 position, Vector2 direction);
 extern bool LoadAnimationData(const char **dataFile);
-extern bool IsAnimationPlaying(const char *sheetName, const char *animName, size_t animID);
-extern size_t GetNewAnimation();
+extern bool IsAnimationSheet(ANIMATION_CONTAINER *container, const char *sheetName);
+extern bool IsAnimationName(ANIMATION_CONTAINER *container, const char *animName);
+extern bool IsAnimationVisible(ANIMATION_CONTAINER *container);
+extern bool IsAnimationPlaying(ANIMATION_CONTAINER *container);
+extern ANIMATION_CONTAINER* GetAnimationContainer();
 
 //------------------------------------------------------------------------------------
 // Functions and types for tokenizing and parsing of .sgd files

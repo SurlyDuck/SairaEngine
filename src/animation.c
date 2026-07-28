@@ -1,7 +1,7 @@
 /* Saíra animation system */
 #include "saira.h"
 
-#define MAX_ANIMATION_OBJECTS 1024
+#define MAX_ANIMATION_CONTAINERS 1024
 
 typedef struct{
 	const char *sheetName;
@@ -10,6 +10,7 @@ typedef struct{
 	Texture2D spriteSheetTexture;
 	uint8_t frames;
 	uint8_t fps;
+	uint8_t cellSize;
 	Vector2 n;
 	Vector2 s;
 	Vector2 e;
@@ -19,7 +20,7 @@ typedef struct{
 	Vector2 se;
 	Vector2 sw;
 	Vector2 sheetSize;
-} animation;
+}animation;
 
 typedef struct{
 	animation *items;
@@ -27,25 +28,22 @@ typedef struct{
 	size_t capacity;
 }animations;
 
-// The actual animation object on screen
-typedef struct {
-	bool isEnabled;
-	bool onRepeat;
-	size_t frame;
+// Animation container representing the actual object rendered on screen
+typedef struct ANIMATION_CONTAINER ANIMATION_CONTAINER;
+struct ANIMATION_CONTAINER{
 	animation animData;
+	bool isHidden;
+	bool onRepeat;
+	bool isPlaying;
+	uint8_t frame;
+	float frameTime;
 	Vector2 position;
 	Vector2 direction;
-}animation_object;
+};
 
-typedef struct{
-	size_t *items;
-	size_t count;
-	size_t capacity;
-}animation_ids;
-
-static animation_ids idsArray   = {0};
 static animations allAnimations = {0}; /* animation data array */
-static animation_object animationObjectArray[MAX_ANIMATION_OBJECTS] = {0};
+static ANIMATION_CONTAINER *containers = NULL;
+static size_t containersCount = 0;
 
 static bool AppendAnimationsData(FILE *data){
 	char *rawTest = NULL;
@@ -85,13 +83,14 @@ static bool AppendAnimationsData(FILE *data){
 			animation newAnim          = {};
 			node *nodeAnim             = animationNodes.items[i];
 			newAnim.sheetName          = allNodes[0].name;
-			newAnim.filePath           = allNodes[0].constants[0]->value;
+			newAnim.filePath           = allNodes[0].constants[0]->value; /* dangerous */
+			newAnim.cellSize	 	 		= (uint8_t) atoi(GetConstantValue(&allNodes[0], "cell"));
 			newAnim.animName           = GetConstantValue(nodeAnim, "name");
 			newAnim.frames             = (uint8_t) strtoull(GetConstantValue(nodeAnim, "frames"), NULL, 10);
 			newAnim.fps                = (uint8_t) strtoull(GetConstantValue(nodeAnim, "fps"), NULL, 10);
 			newAnim.spriteSheetTexture = animationTexture;
 			newAnim.sheetSize          = (Vector2) {animationTexture.width, animationTexture.height};
-			
+					
 			if(nodeAnim->childrenCount != 8){
 				TraceLog(LOG_ERROR, "Each animation needs 8 coordinates");
 				return false;
@@ -134,12 +133,10 @@ bool LoadAnimationData(const char **dataFile){
 			TraceLog(LOG_ERROR, "Couldn't load animation data file %s: %s", dataFile[i], strerror(errno));
 			return false;		
 		}
-		
 		if(!AppendAnimationsData(data)){
 			TraceLog(LOG_ERROR, "Couldn't parse animation data file %s", dataFile[i]);
 			return false;		
 		}
-
 		fclose(data);
 		i++;
 	}
@@ -147,74 +144,110 @@ bool LoadAnimationData(const char **dataFile){
 	return true;
 }
 
-void PlayAnimation(const char *sheetName, const char *animName, bool repeat, size_t animID, bool stack, Vector2 dir, Vector2 pos){
-	assert(animationObjectArray[animID].isEnabled && "animation not enabled or freed");
-
-	if(!animationObjectArray[animID].animData.animName == NULL){
-		if(strcmp(animationObjectArray[animID].animData.animName, animName) == 0){
-			/* already playing, only update direction, position and repeat */
-			animationObjectArray[animID].onRepeat = repeat;
-			animationObjectArray[animID].position = pos;
-			animationObjectArray[animID].direction = dir;
-
-			return;
-		}
-
-	}
-	
+/* TODO: this maybe too slow. Maybe implement a hash table for anim data? */
+void SetAnimation(ANIMATION_CONTAINER *container, const char *sheetName, const char *animName, bool repeat){
 	for(size_t i = 0; i < allAnimations.count; ++i){
-		if(strcmp(allAnimations.items[i].animName,   animName) == 0 &&
-			strcmp(allAnimations.items[i].sheetName, sheetName) == 0){
-			animationObjectArray[animID].animData = allAnimations.items[i];
-			animationObjectArray[animID].position = pos;
-			animationObjectArray[animID].position = dir;
-		animationObjectArray[animID].onRepeat = repeat;
+		if(strcmp(allAnimations.items[i].sheetName, sheetName) == 0 &&
+		strcmp(allAnimations.items[i].animName, animName) == 0){
+			container->animData = allAnimations.items[i];
+			container->onRepeat = repeat;
+			break;
 		}
 	}
+		
+}
+
+void MoveAnimation(ANIMATION_CONTAINER *container, Vector2 position, Vector2 direction){
+	container->position  = position;
+	container->direction = direction;
+}
+
+void SetAnimationFrame(ANIMATION_CONTAINER *container, size_t frame){
+	container->frame = frame;
+}
+
+void PlayAnimation(ANIMATION_CONTAINER *container, bool repeat){
+	container->isPlaying = true;
+	container->onRepeat = repeat;
+}
+
+bool IsAnimationSheet(ANIMATION_CONTAINER *container, const char *sheetName){
+	if(container->animData.sheetName == NULL) return false;
+	return strcmp(container->animData.sheetName, sheetName) == 0;
+}
+
+bool IsAnimationVisible(ANIMATION_CONTAINER *container){
+	return !container->isHidden;
+}
+
+void SetAnimationVisibility(ANIMATION_CONTAINER *container, bool visible){
+	container->isHidden = !visible;
+}
+
+bool IsAnimationPlaying(ANIMATION_CONTAINER *container){
+	return container->isPlaying;
+}
+
+bool IsAnimationName(ANIMATION_CONTAINER *container, const char *animName){
+	if(container->animData.animName == NULL) return false;
+	return strcmp(container->animData.animName, animName) == 0;
+}
+
+void DrawAllAnimationContainers(){
+	if(containers == NULL) return;
+	for(size_t i = 0; i < containersCount; ++i){
+		if(!containers[i].isPlaying) continue;
+		animation animData = containers[i].animData;
+		
+		Rectangle r = {0};
+		switch(GetDirectionFromVector(containers[i].direction)){
+			case NORTH: r.x = animData.n.x,  r.y = animData.n.y;  break;
+			case SOUTH: r.x = animData.s.x,  r.y = animData.s.y;  break;
+			case EAST: r.x = animData.e.x,  r.y = animData.e.y;  break;
+			case WEST: r.x = animData.w.x,  r.y = animData.w.y;  break;
+			case NORTHEAST: r.x = animData.ne.x, r.y = animData.ne.y; break;
+			case NORTHWEST: r.x = animData.nw.x, r.y = animData.nw.y; break;
+			case SOUTHEAST: r.x = animData.se.x, r.y = animData.se.y; break;
+			case SOUTHWEST: r.x = animData.sw.x, r.y = animData.sw.y; break;
+			default: return;
+		}
+		r.width  = animData.cellSize;
+		r.height = animData.cellSize;
+		r.x *= animData.cellSize;
+		r.y *= animData.cellSize;
+		
+		containers[i].frameTime += GetFrameTime();
+		if(containers[i].frameTime >= (float)(1.00f/animData.fps)) {
+			containers[i].frame++;
+			containers[i].frameTime = 0;
+		}
+		if(containers[i].frame >= animData.frames-1){
+			containers[i].frame = 0;
+			containers[i].frameTime = 0.00f;
+		}	
+		r.x += containers[i].frame * animData.cellSize;
+
+		DrawTextureRec(animData.spriteSheetTexture, r, containers[i].position, WHITE);
+	}
+	
+	return;
+}
+
+ANIMATION_CONTAINER* GetAnimationContainer(){
+	assert(containersCount < MAX_ANIMATION_CONTAINERS && "too many animations");
+
+	ANIMATION_CONTAINER emptyContainer = {0};
+	emptyContainer.isPlaying = true;
+
+	if(containersCount == 0){
+		containers = (ANIMATION_CONTAINER*) malloc(sizeof(ANIMATION_CONTAINER) * MAX_ANIMATION_CONTAINERS);
+	}
+	containers[containersCount] = emptyContainer;
+	containersCount++;
+	return &containers[containersCount-1];
 	
 }
 
-bool IsAnimationPlaying(const char *sheetName, const char *animName, size_t animID){
-	if(strcmp(animationObjectArray[animID].animData.sheetName,sheetName) == 0 &&
-		strcmp(animationObjectArray[animID].animData.animName,animName)   == 0){
-		return true;
-	}
-	return false;
-}
+void Exit(){
 
-void DrawAllAnimations(){
-	for(size_t i = 0; i < idsArray.count; ++i){
-		size_t id = idsArray.items[i];
-		Rectangle rec = {
-			.x = animationObjectArray[id].animData.se.x * 128,
-			.y = animationObjectArray[id].animData.se.y * 128,
-			.width = 128,
-			.height = 128
-		};
-		DrawTextureRec(animationObjectArray[id].animData.spriteSheetTexture, rec, animationObjectArray[id].position, WHITE);
-	}
-}
-
-size_t GetNewAnimation(){
-	size_t newID = 0;
-	if(idsArray.count == 0){
-		DA_APPEND(newID, idsArray);
-		animationObjectArray[newID].isEnabled = true;
-	}else{
-		bool foundSlot = false;
-		for(size_t i = 0; i < MAX_ANIMATION_OBJECTS; ++i){
-			if(!animationObjectArray[i].isEnabled){
-				foundSlot = true;
-				newID = i;
-				DA_APPEND(newID, idsArray);
-			}
-		}
-		assert(foundSlot && "Too many animations!");
-	}
-
-	return newID;
-}
-
-void RemoveAnimation(size_t id){
-/*TODO*/
 }

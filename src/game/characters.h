@@ -1,7 +1,7 @@
 #ifndef _CHARACTERS_H
 #define _CHARACTERS_H
 
-extern void UpdateCharacters();
+extern void UpdateCharacters(float deltaTime);
 extern void InitCharacters();
 
 

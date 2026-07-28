@@ -64,7 +64,7 @@ for directory in "${directories[@]}"; do
 	current_card_dir="direction"
 	for file in "${cardinal[@]}"; do
 		if [[ x -ge maxWidth ]]; then x=0; y+=1; maxWidthReached=1; fi
-		#n=$(basename "$file")
+		n=$(basename "$file")
 		card_dir_name=$(dirname "$file") 
 		card_dir_name=$(basename "$card_dir_name")
 		if [[ foundFrames -eq 0 ]]; then frames+=1; fi

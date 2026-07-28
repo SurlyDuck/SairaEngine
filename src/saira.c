@@ -27,7 +27,20 @@ int main(){
 	return 0;
 }
 
+int GetDirectionFromVector(Vector2 vec){
+	int x = vec.x;
+	int y = vec.y;
 
+	if(x == 0 && y < 0)  return NORTH;
+	if(x == 0 && y > 0)  return SOUTH;
+	if(x > 0 && y == 0)  return EAST;
+	if(x < 0 && y == 0)  return WEST;
+	if(x > 0 && y < 0)   return NORTHEAST;
+	if(x > 0 && y > 0)   return SOUTHEAST;
+	if(x < 0 && y > 0)   return SOUTHWEST;
+	
+	return SOUTH;
+}
 
 
 
