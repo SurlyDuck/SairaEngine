@@ -68,7 +68,7 @@ enum{
 
 // 8 Directions every graphic object may face as a 2d vector
 #define NORTH_VEC     (Vector2){0, -1}
-#define SOUTH_VEC     (Vector1){0,  0}
+#define SOUTH_VEC     (Vector2){0,  1}
 #define EAST_VEC      (Vector2){1,  0}
 #define WEST_VEC      (Vector2){-1, 0}
 #define NORTHEAST_VEC (Vector2){1, -1}
@@ -87,6 +87,8 @@ extern void UpdateDrawGame(float deltaTime);
 //------------------------------------------------------------------------------------
 extern void FillBackground(Color color);
 extern int GetDirectionFromVector(Vector2 vec);
+extern int GetGameWidth();
+extern int GetGameHeight();
 
 //------------------------------------------------------------------------------------
 // Animation system 
@@ -104,6 +106,7 @@ extern bool IsAnimationName(ANIMATION_CONTAINER *container, const char *animName
 extern bool IsAnimationVisible(ANIMATION_CONTAINER *container);
 extern bool IsAnimationPlaying(ANIMATION_CONTAINER *container);
 extern ANIMATION_CONTAINER* GetAnimationContainer();
+extern Vector2 GetAnimationPosition(ANIMATION_CONTAINER *container);
 
 //------------------------------------------------------------------------------------
 // Functions and types for tokenizing and parsing of .sgd files
@@ -133,5 +136,15 @@ extern tokens *GetAllTokens(const char *raw);
 extern node   *ParseTokens(tokens *allTokens);
 extern ptr_da GetNodes(const char *nodeName, node *searchArray);
 extern const char *GetConstantValue(node *searchNode, const char *constantName);
+
+//------------------------------------------------------------------------------------
+// Functions and types for the 2d camera
+//------------------------------------------------------------------------------------
+extern void InitCamera(Vector2 position);
+extern void CenterCamera(Vector2 position);
+extern void FlyCamera(Vector2 position, float speed);
+extern void ShakeCamera(float speed, float duration);
+extern void SetCameraZoom(float zoom, bool smooth);
+extern Camera2D GetCamera();
 
 #endif //_ENGINE_H

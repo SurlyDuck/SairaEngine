@@ -1,4 +1,13 @@
-/* Saíra animation system */
+/****************************************************************************************
+*										Saíra animation system
+*	- Creates and manages animation containers that represent animated objects on screen
+*	- Reads .sgd files to load animations into memory using the parser API
+*
+*  - Animation containers are stored into dynamic memory and need to be freed later
+*	- Maximum number of containers on screen at anytime is defined by MAX_ANIMATION_CONTAINERS
+*	- ANIMATION_CONTAINER is always passed as an opaque structure
+*
+*******************************************************************************************/
 #include "saira.h"
 
 #define MAX_ANIMATION_CONTAINERS 1024
@@ -146,6 +155,10 @@ bool LoadAnimationData(const char **dataFile){
 
 /* TODO: this maybe too slow. Maybe implement a hash table for anim data? */
 void SetAnimation(ANIMATION_CONTAINER *container, const char *sheetName, const char *animName, bool repeat){
+	if(container == NULL){
+		TraceLog(LOG_ERROR, "Null animation container");
+		return;
+	}
 	for(size_t i = 0; i < allAnimations.count; ++i){
 		if(strcmp(allAnimations.items[i].sheetName, sheetName) == 0 &&
 		strcmp(allAnimations.items[i].animName, animName) == 0){
@@ -221,16 +234,22 @@ void DrawAllAnimationContainers(){
 			containers[i].frame++;
 			containers[i].frameTime = 0;
 		}
-		if(containers[i].frame >= animData.frames-1){
+		if(containers[i].frame >= animData.frames-1 && containers[i].onRepeat){
 			containers[i].frame = 0;
 			containers[i].frameTime = 0.00f;
-		}	
+		}else if(containers[i].frame >= animData.frames-1 && !containers[i].onRepeat)
+			containers[i].frame = animData.frames-1;
+		
 		r.x += containers[i].frame * animData.cellSize;
 
 		DrawTextureRec(animData.spriteSheetTexture, r, containers[i].position, WHITE);
 	}
 	
 	return;
+}
+
+Vector2 GetAnimationPosition(ANIMATION_CONTAINER *container){
+	return container->position;
 }
 
 ANIMATION_CONTAINER* GetAnimationContainer(){

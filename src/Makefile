@@ -35,11 +35,13 @@ endif
 ENGINE = \
 	saira.o \
 	sgd.o \
-	animation.o 
+	animation.o\
+	camera.o
 
 GAME = \
 	./game/game.o \
-	./game/characters.o
+	./game/characters.o \
+	./game/player.o
 
 all: $(ENGINE) $(GAME) build
 

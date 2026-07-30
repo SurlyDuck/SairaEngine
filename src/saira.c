@@ -1,10 +1,18 @@
-/* Saíra main module */
-/* Runs the game, update states check for errors... */
+/************************************************************************** 
+*									Saíra main module 
+*	Initialize and updates the game, render frames, updates user options...
+*
+***************************************************************************/
 
 #include "saira.h"
 
+void DisplayDebugInformation();
+
+static game gameEnv = {0};
+
 int main(){
-	game gameEnv = InitGame();
+	gameEnv = InitGame();
+	//SetConfigFlags(FLAG_FULLSCREEN_MODE);
 	InitWindow(gameEnv.width, gameEnv.height, gameEnv.title);
 
 	/* resource loading */	
@@ -13,11 +21,43 @@ int main(){
 	}
 	
 	SetTargetFPS(gameEnv.fps);
-	while(!WindowShouldClose()){
-		BeginDrawing();
-		ClearBackground(WHITE);
 
-		UpdateDrawGame(GetFrameTime());
+	RenderTexture mainFrameBuffer = {0};
+	mainFrameBuffer = LoadRenderTexture(gameEnv.width, gameEnv.height);
+	//SetTextureFilter(mainFrameBuffer.texture, TEXTURE_FILTER_BILINEAR);
+	SetTextureFilter(mainFrameBuffer.texture, TEXTURE_FILTER_POINT);
+	float widthScale  = (float)(GetScreenWidth()) /  (float)(gameEnv.width);
+	float heightScale = (float)(GetScreenHeight()) / (float)(gameEnv.height);
+	float windowScale = (widthScale < heightScale) ? widthScale : heightScale;
+	
+	InitCamera((Vector2){0, 0});
+
+	while(!WindowShouldClose()){
+		BeginTextureMode(mainFrameBuffer);
+			BeginMode2D(GetCamera());	
+			ClearBackground(WHITE);
+			UpdateDrawGame(GetFrameTime());
+			EndMode2D();
+
+		EndTextureMode();
+	
+		Rectangle gameSourceRect = {
+		.x = 0.00f,
+		.y = 0.00f,
+		.width  = mainFrameBuffer.texture.width,
+		.height = -mainFrameBuffer.texture.height, /* go fuck urself opengl */};
+			
+		Rectangle screenDestRect = {
+		.x      = (float)(GetScreenWidth()  - (float)(windowScale * gameEnv.width)) * .5f,
+		.y      = (float)(GetScreenHeight() - (float)(windowScale * gameEnv.height))* .5f,
+		.width  = (float)(gameEnv.width  * windowScale),
+		.height = (float)(gameEnv.height * windowScale)};
+
+		BeginDrawing();
+			ClearBackground(PINK);
+			DrawTexturePro(mainFrameBuffer.texture, gameSourceRect, screenDestRect, (Vector2){0,0}, 0.00f, WHITE);
+			DisplayDebugInformation();	
+
 		EndDrawing();
 	
 	}
@@ -38,9 +78,19 @@ int GetDirectionFromVector(Vector2 vec){
 	if(x > 0 && y < 0)   return NORTHEAST;
 	if(x > 0 && y > 0)   return SOUTHEAST;
 	if(x < 0 && y > 0)   return SOUTHWEST;
+	if(x < 0 && y < 0)   return NORTHWEST;
 	
 	return SOUTH;
 }
 
+int GetGameWidth(){
+	return gameEnv.width;
+}
 
+int GetGameHeight(){
+	return gameEnv.height;
+}
 
+void DisplayDebugInformation(){
+	DrawFPS(0,0);
+}

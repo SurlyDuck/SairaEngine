@@ -1,10 +1,12 @@
-// Tokenizer and parser for Saíra Game Data files (.sgd).
-// TODO: still very unsafe. A misformatted file may cause segfault without further memory boundary checks.
-//
-// Use GetAllTokens() to get all tokens from a string and ParseTokens() to parse it.
-//	Tokens are allocated at dynamic memory and are freed everytime GetAllToken() is called. Nodes and constants are
-// stored in static memory with MAX_NODES and MAX_CONSTANTS restriction. Each node's pointers to children/constants
-// are also freed when calling ParseTokens() again.
+/*********************************************************************************************************************
+*	 								Tokenizer and parser for Saíra Game Data files (.sgd).
+*	 TODO: still very unsafe. A misformatted file may cause segfault without further memory boundary checks.
+*	
+*	Use GetAllTokens() to get all tokens from a string and ParseTokens() to parse it.
+*	Tokens are allocated at dynamic memory and are freed everytime GetAllToken() is called. Nodes and constants are
+*	stored in static memory with MAX_NODES and MAX_CONSTANTS restriction. Each node's pointers to children/constants
+*	are also freed when calling ParseTokens() again.
+*********************************************************************************************************************/
 
 #include "saira.h"
 

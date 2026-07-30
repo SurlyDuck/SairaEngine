@@ -1,8 +1,9 @@
 #include "../saira.h"
 #include "characters.h"
+#include "player.h"
 
-#define GAME_WIDTH  768
-#define GAME_HEIGHT 432
+#define GAME_WIDTH  1024
+#define GAME_HEIGHT 576
 #define FPS         60
 
 typedef enum{
@@ -34,8 +35,10 @@ void UpdateDrawGame(float deltaTime){
 	game_state newState = UpdateDrawState(deltaTime);
 	if(newState == currentGameState) return;
 
+	/* new state initialization */
 	switch(newState){
 		case EXPEDITION:{
+			InitPlayer();
 			InitCharacters();
 			currentGameState = newState;
 			break;
@@ -49,6 +52,7 @@ game_state UpdateDrawState(float deltaTime){
 		case NONE: return EXPEDITION; /* game first state */
 		case MENU: return EXPEDITION; /* TODO */
 		case EXPEDITION:{
+			UpdatePlayer(deltaTime);
 			UpdateCharacters(deltaTime);
 			
 			DrawAllAnimationContainers();

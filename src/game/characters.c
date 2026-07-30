@@ -4,37 +4,37 @@
 
 /* TODO: array of characters must come from the world data */
 
-/*TODO: is better to handle the player somewhere else */
-static Vector2 playerDirection = {0};
-static Vector2 playerPosition  = {10,10};
+static Vector2 p = {0};
 
-ANIMATION_CONTAINER *anim = NULL;
+ANIMATION_CONTAINER *secondAnim = NULL;
+ANIMATION_CONTAINER *thirdAnim = NULL;
+ANIMATION_CONTAINER *fourthAnim = NULL;
+float fourthRot = 0;
 void InitCharacters(){
-	playerDirection = SOUTHEAST_VEC;
-	anim = GetAnimationContainer();
-	SetAnimation(anim, "Default", "Walking", true);
+	secondAnim = GetAnimationContainer();
+	thirdAnim  = GetAnimationContainer();
+	fourthAnim = GetAnimationContainer();
+	SetAnimation(secondAnim, "Default", "Walking", true);
+	SetAnimation(thirdAnim, "Default", "Defense_spear", false);
+	SetAnimation(fourthAnim, "Default", "Idle_Spear", false);
+	
+	MoveAnimation(secondAnim, (Vector2){GetGameWidth()-128,0}, SOUTHWEST_VEC);
+	MoveAnimation(thirdAnim, (Vector2){GetGameWidth()/2-64,100}, SOUTH_VEC);
+	p = EAST_VEC;
+	MoveAnimation(fourthAnim, (Vector2){GetGameWidth()/2-64,0}, p);
 }
 
 void UpdateCharacters(float deltaTime){
-	if (anim == NULL) return;
-	/* TODO: no need of so many checks, lots of things are default. Just doing to test the api */
-	if(!IsAnimationSheet(anim, "Default") || !IsAnimationName(anim, "Walking")){
-		SetAnimation(anim, "Default", "Walking", true);
-		SetAnimationFrame(anim, 0);
-	}
-	
-	if(!IsAnimationVisible(anim)){
-		SetAnimationVisibility(anim, true);
-	}
+	if (secondAnim == NULL) return;
 
-	if(!IsAnimationPlaying(anim)){
-		PlayAnimation(anim, true);
-	}
-
-	MoveAnimation(anim, playerPosition, playerDirection);
-	playerPosition.x += 50 * deltaTime;
-	playerPosition.y += 50 * deltaTime;
+	Vector2 sPosition = GetAnimationPosition(secondAnim);
+	if(sPosition.y >= GetGameHeight()+30) sPosition = (Vector2) {GetGameWidth(),-90};
+	sPosition.x -= 50 * deltaTime;
+	sPosition.y += 50 * deltaTime;
+	MoveAnimation(secondAnim, sPosition, SOUTHWEST_VEC);
 	
-	if(playerPosition.y >= 432) playerPosition = (Vector2) {-90,-90};
+	fourthRot += 400*(M_PI/180.00f) * deltaTime;
+	
+	MoveAnimation(fourthAnim, (Vector2){GetGameWidth()/2-64,0}, (Vector2){roundf(cosf(fourthRot)), roundf(sinf(fourthRot))});
 
 }
