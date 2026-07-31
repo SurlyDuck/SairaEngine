@@ -9,6 +9,7 @@
 *********************************************************************************************************************/
 
 #include "saira.h"
+#include "./include/raylib.h"
 
 #define WHITESPACE(val) (val == '\n' || val == ' ' || val == '\t')
 #define LABEL(val) (val == '[' || val == ']')

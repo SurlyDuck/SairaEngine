@@ -9,6 +9,7 @@
 *
 *******************************************************************************************/
 #include "saira.h"
+#include "./include/raylib.h"
 
 #define MAX_ANIMATION_CONTAINERS 1024
 
@@ -81,7 +82,7 @@ static bool AppendAnimationsData(FILE *data){
 		/* TODO: move this to a function in saira.c */
 		Image rawImage = LoadImage(allNodes[0].constants[0]->value);
 		ImageFormat(&rawImage, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-		ImageColorReplace(&rawImage, TRANSPARENT, BLANK);
+		ImageColorReplace(&rawImage, GetColor(TRANSPARENT), BLANK);
 		Texture2D animationTexture  = LoadTextureFromImage(rawImage);
 
 		for(size_t i = 0; i < animationNodes.count; ++i){

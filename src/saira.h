@@ -1,6 +1,5 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
-#include "./include/raylib.h"
 #include "./include/raymath.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +51,7 @@ typedef struct {
 }game;
 
 // The background color used for every sprite
-#define TRANSPARENT GetColor(0xFE01FDFF)
+#define TRANSPARENT 0xFE01FDFF
 
 // 8 Directions every graphic object may face
 enum{
@@ -85,7 +84,7 @@ extern void UpdateDrawGame(float deltaTime);
 //------------------------------------------------------------------------------------
 // Below this point only functions and types implemented by the engine
 //------------------------------------------------------------------------------------
-extern void FillBackground(Color color);
+extern void FillBackground(size_t color);
 extern int GetDirectionFromVector(Vector2 vec);
 extern int GetGameWidth();
 extern int GetGameHeight();
@@ -145,6 +144,6 @@ extern void CenterCamera(Vector2 position);
 extern void FlyCamera(Vector2 position, float speed);
 extern void ShakeCamera(float speed, float duration);
 extern void SetCameraZoom(float zoom, bool smooth);
-extern Camera2D GetCamera();
+extern void BeginModeCamera2D();
 
 #endif //_ENGINE_H

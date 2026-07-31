@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "saira.h"
+#include "./include/raylib.h"
 
 void DisplayDebugInformation();
 
@@ -34,9 +35,10 @@ int main(){
 
 	while(!WindowShouldClose()){
 		BeginTextureMode(mainFrameBuffer);
-			BeginMode2D(GetCamera());	
-			ClearBackground(WHITE);
-			UpdateDrawGame(GetFrameTime());
+
+			BeginModeCamera2D();
+				ClearBackground(WHITE);
+				UpdateDrawGame(GetFrameTime());
 			EndMode2D();
 
 		EndTextureMode();

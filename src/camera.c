@@ -4,6 +4,7 @@
 ***************************************************************************/
 
 #include "saira.h"
+#include "./include/raylib.h"
 
 static Camera2D camera = {0};
 
@@ -21,4 +22,8 @@ void CenterCamera(Vector2 position){
 
 Camera2D GetCamera(){
 	return camera;
+}
+
+void BeginModeCamera2D(){
+	BeginMode2D(camera);
 }
