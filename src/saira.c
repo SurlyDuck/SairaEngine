@@ -14,6 +14,7 @@
 
 void DisplayDebugInformation(); 
 static void SairaLogV(int logLevel, const char *text, va_list args);
+static void LoadStandardKeys();
 
 static game gameEnv = {0};
 
@@ -23,6 +24,8 @@ int main(){
 	SetTraceLogCallback(callback);
 	//SetConfigFlags(FLAG_FULLSCREEN_MODE);
 	InitWindow(gameEnv.width, gameEnv.height, gameEnv.title);
+	InitInput();
+	LoadStandardKeys();
 
 	/* resource loading */	
 	if(!LoadAnimationData(gameEnv.animationsDataPath)){
@@ -77,6 +80,10 @@ int main(){
 	return 0;
 }
 
+static void LoadStandardKeys(){
+	AddKeyAction(UP_ACTION, KEY_W, false);
+}
+
 int GetDirectionFromVector(Vector2 vec){
 	int x = vec.x;
 	int y = vec.y;
@@ -100,6 +107,7 @@ int GetGameWidth(){
 int GetGameHeight(){
 	return gameEnv.height;
 }
+
 
 void DisplayDebugInformation(){
 	DrawFPS(0,0);

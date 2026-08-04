@@ -149,7 +149,6 @@ extern void ShakeCamera(float speed, float duration);
 extern void SetCameraZoom(float zoom, bool smooth);
 extern void BeginModeCamera2D();
 
-
 //------------------------------------------------------------------------------------
 // Logging
 //------------------------------------------------------------------------------------
@@ -161,5 +160,25 @@ enum{
 };
 
 extern void SairaLog(int logLevel, const char *msg, ...);
+
+//------------------------------------------------------------------------------------
+// Functions and types for handling user input
+//------------------------------------------------------------------------------------
+typedef enum{
+	NULL_ACTION = 0,
+	UP_ACTION,
+	DOWN_ACTION,
+	RIGHT_ACTION,
+	LEFT_ACTION,
+	QUIT_ACTION,
+	PAUSE_ACTION,
+	ZOOM_ACTION,
+	INFO_ACTION,
+	ACTION_COUNT
+}input_action;
+
+void AddKeyAction(input_action action, int key, bool mouse);
+void InitInput();
+bool IsActionKeyDown(input_action action);
 
 #endif //_ENGINE_H
