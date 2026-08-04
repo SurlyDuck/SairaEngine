@@ -1,24 +1,32 @@
 /************************************************************************** 
 *									Saíra main module 
-*	Initialize and updates the game, render frames, updates user options...
+*	Initialize and updates the game, render frames, load user options, 
+*	implement logging and miscellaneous stuff not worth a module of their own.
 *
+*
+*	NOTES
+*		- The logging is implemented here. SairaLogV is the callback
+*		for Raylib's TraceLog and SairaLog is called everywhere else
 ***************************************************************************/
 
 #include "saira.h"
 #include "./include/raylib.h"
 
-void DisplayDebugInformation();
+void DisplayDebugInformation(); 
+static void SairaLogV(int logLevel, const char *text, va_list args);
 
 static game gameEnv = {0};
 
 int main(){
 	gameEnv = InitGame();
+	TraceLogCallback callback = SairaLogV;
+	SetTraceLogCallback(callback);
 	//SetConfigFlags(FLAG_FULLSCREEN_MODE);
 	InitWindow(gameEnv.width, gameEnv.height, gameEnv.title);
 
 	/* resource loading */	
 	if(!LoadAnimationData(gameEnv.animationsDataPath)){
-		TraceLog(LOG_ERROR, "Couldn't load animation data into memory. Some textures may not work.");
+		SairaLog(SAIRA_ERROR, "Couldn't load animation data into memory. Some textures may not work.");
 	}
 	
 	SetTargetFPS(gameEnv.fps);
@@ -95,4 +103,50 @@ int GetGameHeight(){
 
 void DisplayDebugInformation(){
 	DrawFPS(0,0);
+}
+
+#define LOG_MAX_LENGTH 256
+static void SairaLogV(int logLevel, const char *text, va_list args){
+	char buffer[LOG_MAX_LENGTH] = {0};
+	switch(logLevel){
+		case LOG_ERROR: strcat(buffer,"ERROR: "); break;
+		case LOG_INFO: strcat(buffer,"INFO: "); break;
+		case LOG_WARNING: strcat(buffer,"WARNING: "); break;
+		case LOG_FATAL: strcat(buffer,"FATAL: "); break;
+		default: return; // Ignore everything else
+	}
+	
+	printf("%s", buffer);
+	vfprintf(stdout, text, args);
+	printf("\n");
+	fflush(stdout);
+
+	if(logLevel == LOG_FATAL){
+		SairaPanic();
+	}
+
+	/* TODO: GUI popup */
+	/* TODO: logging file */
+}
+
+void SairaLog(int logLevel, const char *msg, ...){
+	switch(logLevel){
+		case SAIRA_ERROR: logLevel = LOG_ERROR; break;
+		case SAIRA_INFO: logLevel = LOG_INFO; break;
+		case SAIRA_WARNING: logLevel = LOG_WARNING; break;
+		case SAIRA_FATAL: logLevel = LOG_FATAL; break;
+		default: return;
+	}
+	va_list args;
+	va_start(args, msg);
+	//char text[256];
+	//vsprintf(text, msg, args);
+	//TraceLog(logLevel, text);
+	SairaLogV(logLevel, msg, args);
+	va_end(args);
+
+}
+
+void SairaPanic(){
+	exit(69);
 }

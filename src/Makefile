@@ -22,7 +22,7 @@ else
 	LFLAGS:= -L./lib_linux/ -lraylib -lm -lX11
 endif
 
-CFLAGS:= -I -std=c11 -Wall -Wextra -pedantic
+CFLAGS:= -I -std=c99 -Wall -Wextra -pedantic
 
 ifeq ($(BUILD_MODE),DEBUG)
 	CFLAGS:= -ggdb ${CFLAGS}

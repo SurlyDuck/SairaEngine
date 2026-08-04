@@ -3,6 +3,7 @@
 #include "./include/raymath.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -75,6 +76,7 @@ enum{
 #define SOUTHEAST_VEC (Vector2){1,  1}
 #define SOUTHWEST_VEC (Vector2){-1, 1}
 
+
 //------------------------------------------------------------------------------------
 // Functions each game must implement
 //------------------------------------------------------------------------------------
@@ -85,6 +87,7 @@ extern void UpdateDrawGame(float deltaTime);
 // Below this point only functions and types implemented by the engine
 //------------------------------------------------------------------------------------
 extern void FillBackground(size_t color);
+extern void SairaPanic();
 extern int GetDirectionFromVector(Vector2 vec);
 extern int GetGameWidth();
 extern int GetGameHeight();
@@ -145,5 +148,18 @@ extern void FlyCamera(Vector2 position, float speed);
 extern void ShakeCamera(float speed, float duration);
 extern void SetCameraZoom(float zoom, bool smooth);
 extern void BeginModeCamera2D();
+
+
+//------------------------------------------------------------------------------------
+// Logging
+//------------------------------------------------------------------------------------
+enum{ 
+    SAIRA_INFO = 0,       // Info logging, used for program execution info
+    SAIRA_WARNING,        // Warning logging, used on recoverable failures
+    SAIRA_ERROR,          // Error logging, used on unrecoverable failures
+    SAIRA_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+};
+
+extern void SairaLog(int logLevel, const char *msg, ...);
 
 #endif //_ENGINE_H

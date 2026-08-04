@@ -9,7 +9,6 @@
 *********************************************************************************************************************/
 
 #include "saira.h"
-#include "./include/raylib.h"
 
 #define WHITESPACE(val) (val == '\n' || val == ' ' || val == '\t')
 #define LABEL(val) (val == '[' || val == ']')
@@ -189,20 +188,20 @@ static void ClearTokenName(token *t){
 void PrintNodeTree(node *root, int tabLevel){
 	const char *tabs = "\t\t\t\t\t\t\t\t\t\t";
 	if(root->childrenCount == 0){
-		TraceLog(LOG_INFO, "%.*s%s;", tabLevel, tabs,root->name);
+		SairaLog(SAIRA_INFO, "%.*s%s;", tabLevel, tabs,root->name);
 		return;
 	}else{
-		TraceLog(LOG_INFO, "%.*s[%s];", tabLevel, tabs,root->name);
+		SairaLog(SAIRA_INFO, "%.*s[%s];", tabLevel, tabs,root->name);
 		for(size_t i = 0; i < root->childrenCount; ++i){
 			PrintNodeTree(root->children[i], tabLevel + 1);
 		}
-		TraceLog(LOG_INFO, "%.*s[/%s];", tabLevel, tabs,root->name);
+		SairaLog(SAIRA_INFO, "%.*s[/%s];", tabLevel, tabs,root->name);
 	}
 }
 
 bool CreateNode(token nodeToken, size_t *arrayPtr, int parent, node nodeArray[]){
 	if(*arrayPtr >= MAX_NODES){
-		TraceLog(LOG_ERROR, "Too many nodes!");
+		SairaLog(SAIRA_ERROR, "Too many nodes!");
 		return false; 
 	}
 
@@ -260,6 +259,7 @@ node *ParseTokens(tokens *allTokens){
 		for(;;){
 			t = NextToken(allTokens, &tokenPtr);
 			if(strcmp(t.val, CLOSE_SIGNATURE) == 0 || t.type == INVALID) break;
+			if(tokenPtr >= allTokens->count-1) break;
 			if(strcmp(t.val, "version") == 0){
 				NextToken(allTokens, &tokenPtr);
 				fileVersion = (char*) NextToken(allTokens, &tokenPtr).val;
@@ -270,15 +270,15 @@ node *ParseTokens(tokens *allTokens){
 		} 
 		
 		if(strcmp(t.val, CLOSE_SIGNATURE) != 0){
-			TraceLog(LOG_ERROR, "Signature not closed.");
+			SairaLog(SAIRA_ERROR, "Signature not closed.");
 			return NULL;
 		}
 		if(fileVersion[0] != VERSION[0]){
-			TraceLog(LOG_ERROR, "Wrong or missing version. Wanted  <%s>, found <%s>.", VERSION, fileVersion);
+			SairaLog(SAIRA_ERROR, "Wrong or missing version. Wanted  <%s>, found <%s>.", VERSION, fileVersion);
 			return NULL;
 		}
 	}else{
-		TraceLog(LOG_WARNING, "No token signature found %s", OPEN_SIGNATURE);
+		SairaLog(SAIRA_ERROR, "No token signature found %s", OPEN_SIGNATURE);
 		return NULL;
 	}
 	/* end of signature validation */
@@ -287,7 +287,7 @@ node *ParseTokens(tokens *allTokens){
 
 	token rootToken = NextToken(allTokens, &tokenPtr);
 	if(rootToken.type != OLABEL){
-		TraceLog(LOG_ERROR, "No root found after signature!");
+		SairaLog(SAIRA_ERROR, "No root found after signature!");
 		return NULL;
 	}
 	
@@ -301,7 +301,7 @@ node *ParseTokens(tokens *allTokens){
 	size_t depth                       = 0;
 	
 	if(!CreateNode(rootToken, &nodePtr, -1, allNodes)){
-		TraceLog(LOG_ERROR, "Failure during creation of root node");
+		SairaLog(SAIRA_ERROR, "Failure during creation of root node");
 		return NULL;
 	}
 	DA_PUSH(nodePtr-1, labelStack);
@@ -311,7 +311,7 @@ node *ParseTokens(tokens *allTokens){
 		if (t.type == OLABEL) {
 			size_t parentIndex = labelStack.items[labelStack.count-1];
 			if(!CreateNode(t, &nodePtr, parentIndex, allNodes)){
-				TraceLog(LOG_ERROR, "Failure during creation of node");
+				SairaLog(SAIRA_ERROR, "Failure during creation of node");
 				return NULL;
 			}
 			depth++;
@@ -319,7 +319,7 @@ node *ParseTokens(tokens *allTokens){
 		}else if (t.type == CLABEL && !(tokenPtr >= allTokens->count)){
 			depth--;
 			if(depth > 1024 ){
-				TraceLog(LOG_ERROR, "Unbalanced or overflow labels");
+				SairaLog(SAIRA_ERROR, "Unbalanced or overflow labels");
 				return NULL;
 			}
 			DA_POP(labelStack);
@@ -345,11 +345,11 @@ node *ParseTokens(tokens *allTokens){
 					continue; 
 				}
 			}
-			TraceLog(LOG_ERROR, "wrong definition of constant <%s>",t.val); 
+			SairaLog(SAIRA_ERROR, "wrong definition of constant <%s>",t.val); 
 		}else continue;
 	}
 	if(print){
-		TraceLog(LOG_DEBUG, "--- printing node tree for .sgd file with root: <%s> ---", allNodes[0].name);
+		SairaLog(SAIRA_INFO, "--- printing node tree for .sgd file with root: <%s> ---", allNodes[0].name);
 		PrintNodeTree(&allNodes[0], 0);
 	}
 	free(labelStack.items);
