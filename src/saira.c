@@ -12,17 +12,21 @@
 #include "saira.h"
 #include "./include/raylib.h"
 
-void DisplayDebugInformation(); 
+
 static void SairaLogV(int logLevel, const char *text, va_list args);
 static void LoadStandardKeys();
 
 static game gameEnv = {0};
+static float windowScale = 1;
 
 int main(){
 	gameEnv = InitGame();
 	TraceLogCallback callback = SairaLogV;
 	SetTraceLogCallback(callback);
 	//SetConfigFlags(FLAG_FULLSCREEN_MODE);
+	#ifdef _WIN32
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+	#endif
 	InitWindow(gameEnv.width, gameEnv.height, gameEnv.title);
 	InitInput();
 	LoadStandardKeys();
@@ -40,7 +44,7 @@ int main(){
 	SetTextureFilter(mainFrameBuffer.texture, TEXTURE_FILTER_POINT);
 	float widthScale  = (float)(GetScreenWidth()) /  (float)(gameEnv.width);
 	float heightScale = (float)(GetScreenHeight()) / (float)(gameEnv.height);
-	float windowScale = (widthScale < heightScale) ? widthScale : heightScale;
+	windowScale = (widthScale < heightScale) ? widthScale : heightScale;
 	
 	InitCamera((Vector2){0, 0});
 
@@ -67,9 +71,10 @@ int main(){
 		.height = (float)(gameEnv.height * windowScale)};
 
 		BeginDrawing();
-			ClearBackground(PINK);
+			ClearBackground(BLACK);
 			DrawTexturePro(mainFrameBuffer.texture, gameSourceRect, screenDestRect, (Vector2){0,0}, 0.00f, WHITE);
-			DisplayDebugInformation();	
+			PrintScreenMessage((Vector2){0}, "FPS: %d", GetFPS());
+			DrawDebugItems();
 
 		EndDrawing();
 	
@@ -92,6 +97,9 @@ static void LoadStandardKeys(){
 	AddKeyAction(RIGHT_ACTION, KEY_RIGHT, false);
 	AddKeyAction(LEFT_ACTION,  KEY_A, false);
 	AddKeyAction(LEFT_ACTION,  KEY_LEFT, false);
+	
+	AddKeyAction(ACCEPT_ACTION,  KEY_ENTER, false);
+	AddKeyAction(ACCEPT_ACTION,  MOUSE_BUTTON_LEFT, true);
 }
 
 int GetDirectionFromVector(Vector2 vec){
@@ -118,9 +126,29 @@ int GetGameHeight(){
 	return gameEnv.height;
 }
 
+// TODO
+// A screen coordinate is converted 
+// to a world coordinate (uses camera position/offset) 
+Vector2 ScreenToWorld(Vector2 vec){
+	vec = (Vector2){vec.x - GetGameWidth()*.5, vec.y - GetGameHeight()*.5};
+	Vector2 camCenter = GetCameraPosition();
+	return (Vector2){camCenter.x + vec.x, camCenter.y + vec.y};
+}
 
-void DisplayDebugInformation(){
-	DrawFPS(0,0);
+// A window coordinate is converted
+// to the screen texture coordinate
+Vector2 WindowToScreen(Vector2 vec){
+	vec.x = (vec.x - ((float)(GetScreenWidth() - GetGameWidth() * windowScale)*.5)) / windowScale;
+	vec.y = (vec.y - ((float)(GetScreenHeight() - GetGameHeight() * windowScale)*.5)) / windowScale;
+	
+	// Clamp to texture boundaries
+	vec.x = (vec.x > GetGameWidth()) ? GetGameWidth() : vec.x;
+	vec.x = (vec.x < 0) ? 0 : vec.x;
+
+	vec.y = (vec.y > GetGameHeight()) ? GetGameHeight() : vec.y;
+	vec.y = (vec.y < 0) ? 0 : vec.y;
+
+	return vec;
 }
 
 #define LOG_MAX_LENGTH 256

@@ -37,7 +37,8 @@ ENGINE = \
 	sgd.o \
 	animation.o\
 	camera.o \
-	input.o
+	input.o\
+	ui.o
 
 GAME = \
 	./game/game.o \

@@ -3,8 +3,8 @@
 #include "player.h"
 
 #define GAME_WIDTH  1024
-#define GAME_HEIGHT 576
-#define FPS         60
+#define GAME_HEIGHT  576
+#define FPS           60
 
 typedef enum{
 	NONE = 0,

@@ -19,7 +19,7 @@ typedef struct{
 	uint8_t mouseButtonsCount;
 }action;
 
-action *actionsArray = NULL;
+static action *actionsArray = NULL;
 
 void InitInput(){
 	assert(ACTION_COUNT < MAX_ACTIONS && "Too many actions!");
@@ -61,5 +61,10 @@ bool IsAnyActionKeyDown(input_action action){
 }
 
 Vector2 GetScreenMousePosition(){
-	return GetMousePosition();
+	return WindowToScreen(GetMousePosition());
 }
+
+Vector2 GetWorldMousePosition(){
+	return ScreenToWorld(WindowToScreen(GetMousePosition()));
+}
+

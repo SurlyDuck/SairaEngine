@@ -88,10 +88,11 @@ extern void UpdateDrawGame(float deltaTime);
 //------------------------------------------------------------------------------------
 extern void FillBackground(size_t color);
 extern void SairaPanic();
-extern void PrintScreenMessage(Vector2 position, const char *text, ...);
 extern int GetDirectionFromVector(Vector2 vec);
 extern int GetGameWidth();
 extern int GetGameHeight();
+extern Vector2 ScreenToWorld(Vector2 vec);
+extern Vector2 WindowToScreen(Vector2 vec);
 
 //------------------------------------------------------------------------------------
 // Animation system 
@@ -149,6 +150,7 @@ extern void FlyCamera(Vector2 position, float speed);
 extern void ShakeCamera(float speed, float duration);
 extern void SetCameraZoom(float zoom, bool smooth);
 extern void BeginModeCamera2D();
+extern Vector2 GetCameraPosition();
 
 //------------------------------------------------------------------------------------
 // Logging
@@ -175,6 +177,7 @@ typedef enum{
 	PAUSE_ACTION,
 	ZOOM_ACTION,
 	INFO_ACTION,
+	ACCEPT_ACTION,
 	ACTION_COUNT
 }input_action;
 
@@ -184,5 +187,12 @@ void UpdateKeyAction(input_action action, int oldKey, int newKey);
 bool IsAnyActionKeyDown(input_action action);
 bool IsAllActionKeysDown(input_action action);
 Vector2 GetScreenMousePosition();
+Vector2 GetWorldMousePosition();
+
+//------------------------------------------------------------------------------------
+// Functions and types for a custom user interface
+//------------------------------------------------------------------------------------
+extern void PrintScreenMessage(Vector2 position, const char *text, ...);
+extern void DrawDebugItems();
 
 #endif //_ENGINE_H
