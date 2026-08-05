@@ -37,32 +37,29 @@ void AddKeyAction(input_action action, int key, bool mouse){
 		return;
 	}
 	
-	for(uint8_t i = 0; i < ACTION_COUNT; ++i){
-		if(action == actionsArray[i].id){
-			if(!mouse){
-				actionsArray[i].keyboardKeysCount++;
-				actionsArray[i].keyboardKeys = realloc(actionsArray[i].keyboardKeys, sizeof(KeyboardKey) * actionsArray[i].keyboardKeysCount);
-				actionsArray[i].keyboardKeys[actionsArray[i].keyboardKeysCount-1] = key;
-			}
-			break;
-		}
+	if(!mouse){
+		assert(actionsArray[action].keyboardKeysCount < MAX_KEYS_PER_ACTION && "Too many keys for a single action");
+		size_t c = ++actionsArray[action].keyboardKeysCount;
+		actionsArray[action].keyboardKeys = (KeyboardKey*) realloc(actionsArray[action].keyboardKeys, sizeof(KeyboardKey) * c);
+		if(c < MAX_KEYS_PER_ACTION)
+			actionsArray[action].keyboardKeys[c] = KEY_NULL;
+		actionsArray[action].keyboardKeys[c-1] = key;
 	}
+	// TODO: mouse key actions
 	
 }
 
-void UpdateKeyAction(input_action action, int oldKey, int newKey){
-
-}
-
-bool IsActionKeyDown(input_action action){
-	switch(action){
-		case UP_ACTION: return IsKeyDown(KEY_W);
-		case DOWN_ACTION: return IsKeyDown(KEY_S);
-		case RIGHT_ACTION: return IsKeyDown(KEY_D);
-		case LEFT_ACTION: return IsKeyDown(KEY_A);
-		default: return false;
+bool IsAnyActionKeyDown(input_action action){
+	for(uint8_t i = 0; i < actionsArray[action].keyboardKeysCount; ++i){
+		if(IsKeyDown(actionsArray[action].keyboardKeys[i])) return true;
+	}
+	for(uint8_t i = 0; i < actionsArray[action].mouseButtonsCount; ++i){
+		if(IsMouseButtonDown(actionsArray[action].mouseButtons[i])) return true;
 	}
 
 	return false;
 }
 
+Vector2 GetScreenMousePosition(){
+	return GetMousePosition();
+}

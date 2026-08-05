@@ -80,8 +80,18 @@ int main(){
 	return 0;
 }
 
+// TODO: better to load this from a file
+// TODO: once the user change keys save to another file
 static void LoadStandardKeys(){
 	AddKeyAction(UP_ACTION, KEY_W, false);
+	AddKeyAction(UP_ACTION, KEY_UP, false);
+	AddKeyAction(DOWN_ACTION, KEY_S, false);
+	AddKeyAction(DOWN_ACTION, KEY_DOWN, false);
+
+	AddKeyAction(RIGHT_ACTION, KEY_D, false);
+	AddKeyAction(RIGHT_ACTION, KEY_RIGHT, false);
+	AddKeyAction(LEFT_ACTION,  KEY_A, false);
+	AddKeyAction(LEFT_ACTION,  KEY_LEFT, false);
 }
 
 int GetDirectionFromVector(Vector2 vec){

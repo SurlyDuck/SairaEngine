@@ -88,6 +88,7 @@ extern void UpdateDrawGame(float deltaTime);
 //------------------------------------------------------------------------------------
 extern void FillBackground(size_t color);
 extern void SairaPanic();
+extern void PrintScreenMessage(Vector2 position, const char *text, ...);
 extern int GetDirectionFromVector(Vector2 vec);
 extern int GetGameWidth();
 extern int GetGameHeight();
@@ -179,6 +180,9 @@ typedef enum{
 
 void AddKeyAction(input_action action, int key, bool mouse);
 void InitInput();
-bool IsActionKeyDown(input_action action);
+void UpdateKeyAction(input_action action, int oldKey, int newKey);
+bool IsAnyActionKeyDown(input_action action);
+bool IsAllActionKeysDown(input_action action);
+Vector2 GetScreenMousePosition();
 
 #endif //_ENGINE_H

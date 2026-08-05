@@ -28,7 +28,10 @@ void UpdateCharacters(float deltaTime){
 	if (secondAnim == NULL) return;
 
 	Vector2 sPosition = GetAnimationPosition(secondAnim);
-	if(sPosition.y >= GetGameHeight()+30) sPosition = (Vector2) {GetGameWidth(),-90};
+	if(sPosition.y >= GetGameHeight()+30) {
+		sPosition = (Vector2) {GetGameWidth(),-90};
+		SetAnimationFrame(thirdAnim, 0);
+	}
 	sPosition.x -= 50 * deltaTime;
 	sPosition.y += 50 * deltaTime;
 	MoveAnimation(secondAnim, sPosition, SOUTHWEST_VEC);

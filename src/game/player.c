@@ -20,8 +20,8 @@ void InitPlayer(){
 void UpdatePlayer(float deltaTime){
 	//playerPosition.x += 50 * deltaTime;
 	//playerPosition.y += 50 * deltaTime;
-	cameraVelocity.x = (IsActionKeyDown(RIGHT_ACTION) - IsActionKeyDown(LEFT_ACTION)) * CAMERA_SPEED * deltaTime;
-	cameraVelocity.y = (IsActionKeyDown(DOWN_ACTION) - IsActionKeyDown(UP_ACTION)) * CAMERA_SPEED * deltaTime;
+	cameraVelocity.x = (IsAnyActionKeyDown(RIGHT_ACTION) - IsAnyActionKeyDown(LEFT_ACTION)) * CAMERA_SPEED * deltaTime;
+	cameraVelocity.y = (IsAnyActionKeyDown(DOWN_ACTION) - IsAnyActionKeyDown(UP_ACTION)) * CAMERA_SPEED * deltaTime;
 	cameraPosition.x += cameraVelocity.x;
 	cameraPosition.y += cameraVelocity.y;
 	
