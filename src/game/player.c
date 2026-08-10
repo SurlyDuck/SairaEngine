@@ -4,7 +4,7 @@
 #define CAMERA_SPEED  500
 #define PLAYER_SPEED  100
 
-static Vector2 playerPosition  = {0};
+static Vector2 playerPosition  = {-64, -64};
 static Vector2 playerDirection = {0};
 static Vector2 playerTarget    = {0};
 static Vector2 cameraPosition  = {0};
@@ -12,6 +12,7 @@ static Vector2 cameraVelocity  = {0};
 static ANIMATION_CONTAINER *playerAnim = NULL;
 
 static inline Vector2 GetPlayerPosition();
+static inline Vector2 GetPlayerPositionOffset();
 
 void InitPlayer(){
 	playerDirection = SOUTHEAST_VEC;
@@ -19,7 +20,7 @@ void InitPlayer(){
 	SetAnimation(playerAnim, "Default", "Walking", true);
 	MoveAnimation(playerAnim, playerPosition, playerDirection);
 	cameraPosition = (Vector2){playerPosition.x+64, playerPosition.y+64};
-	playerTarget = GetPlayerPosition();;
+	playerTarget = GetPlayerPositionOffset();
 }
 
 void UpdatePlayer(float deltaTime){
@@ -42,21 +43,26 @@ void UpdatePlayer(float deltaTime){
 		playerTarget = GetWorldMousePosition();
 	}
 
-	if(Vector2Distance(playerTarget, GetPlayerPosition()) > 1){
-		Vector2 dir = Vector2Subtract(playerTarget, GetPlayerPosition());
+	if(Vector2Distance(playerTarget, GetPlayerPositionOffset()) > 1){
+		Vector2 dir = Vector2Subtract(playerTarget, GetPlayerPositionOffset());
 		dir = Vector2Normalize(dir);
-		SairaLog(SAIRA_INFO, "%.2f,%.2f",playerTarget.x, playerTarget.y);
+		//SairaLog(SAIRA_INFO, "%.2f,%.2f",playerTarget.x, playerTarget.y);
 		playerDirection = dir;
-		//playerPosition.x+= dir.x * PLAYER_SPEED * deltaTime;
-		//playerPosition.y+= dir.y * PLAYER_SPEED * deltaTime;
-		playerPosition = playerTarget;
+		playerPosition.x+= dir.x * PLAYER_SPEED * deltaTime;
+		playerPosition.y+= dir.y * PLAYER_SPEED * deltaTime;
+		SetAnimation(playerAnim, "Default", "Walking", true);
+	}else{
+		SetAnimation(playerAnim, "Default", "Idle_Spear", true);
 	}
 	
-	MoveAnimation(playerAnim, GetPlayerPosition(), playerDirection);
-	//CenterCamera((Vector2){playerPosition.x+64, playerPosition.y+64});
+	MoveAnimation(playerAnim, GetPlayerPosition(), (Vector2){roundf(playerDirection.x), roundf(playerDirection.y)});
 
 }
 
 static inline Vector2 GetPlayerPosition(){
-	return (Vector2) {playerPosition.x+64, playerPosition.y-64};
+	return (Vector2) {playerPosition.x, playerPosition.y};
+}
+
+static inline Vector2 GetPlayerPositionOffset(){
+	return (Vector2) {playerPosition.x+64, playerPosition.y+64};
 }

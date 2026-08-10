@@ -2,7 +2,7 @@
 #include "characters.h"
 #include "player.h"
 
-#define GAME_WIDTH  1024
+#define GAME_WIDTH  1023
 #define GAME_HEIGHT  576
 #define FPS           60
 

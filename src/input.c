@@ -44,8 +44,14 @@ void AddKeyAction(input_action action, int key, bool mouse){
 		if(c < MAX_KEYS_PER_ACTION)
 			actionsArray[action].keyboardKeys[c] = KEY_NULL;
 		actionsArray[action].keyboardKeys[c-1] = key;
+	}else{
+		assert(actionsArray[action].mouseButtonsCount < MAX_KEYS_PER_ACTION && "Too many keys for a single action");
+		size_t c = ++actionsArray[action].mouseButtonsCount;
+		actionsArray[action].mouseButtons = (MouseButton*) realloc(actionsArray[action].mouseButtons, sizeof(MouseButton) * c);
+		if(c < MAX_KEYS_PER_ACTION)
+			actionsArray[action].mouseButtons[c] = MOUSE_BUTTON_LEFT;
+		actionsArray[action].mouseButtons[c-1] = key;
 	}
-	// TODO: mouse key actions
 	
 }
 

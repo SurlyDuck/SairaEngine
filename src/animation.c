@@ -240,7 +240,7 @@ void DrawAllAnimationContainers(){
 			containers[i].frameTime = 0.00f;
 		}else if(containers[i].frame >= animData.frames-1 && !containers[i].onRepeat)
 			containers[i].frame = animData.frames-1;
-		
+		//TODO: update y value when at the end of sheet also?
 		r.x += containers[i].frame * animData.cellSize;
 
 		DrawTextureRec(animData.spriteSheetTexture, r, containers[i].position, WHITE);

@@ -99,6 +99,7 @@ static void LoadStandardKeys(){
 	AddKeyAction(LEFT_ACTION,  KEY_LEFT, false);
 	
 	AddKeyAction(ACCEPT_ACTION,  KEY_ENTER, false);
+	AddKeyAction(ACCEPT_ACTION,  KEY_SPACE, false);
 	AddKeyAction(ACCEPT_ACTION,  MOUSE_BUTTON_LEFT, true);
 }
 

@@ -42,6 +42,11 @@ typedef struct {
 	size_t capacity;
 }ptr_da;
 
+// Nice way to save memory in enum types that go inside structs
+#define SAIRA_ENUM(type, name) type name; enum
+// The background color used for every sprite
+#define TRANSPARENT 0xFE01FDFF
+
 // Game data for each game
 typedef struct {
 	uint16_t    width;
@@ -50,9 +55,6 @@ typedef struct {
 	const char *title;
 	const char **animationsDataPath;
 }game;
-
-// The background color used for every sprite
-#define TRANSPARENT 0xFE01FDFF
 
 // 8 Directions every graphic object may face
 enum{
@@ -167,7 +169,7 @@ extern void SairaLog(int logLevel, const char *msg, ...);
 //------------------------------------------------------------------------------------
 // Functions and types for handling user input
 //------------------------------------------------------------------------------------
-typedef enum{
+typedef SAIRA_ENUM(uint8_t, input_action){
 	NULL_ACTION = 0,
 	UP_ACTION,
 	DOWN_ACTION,
@@ -179,7 +181,7 @@ typedef enum{
 	INFO_ACTION,
 	ACCEPT_ACTION,
 	ACTION_COUNT
-}input_action;
+};
 
 void AddKeyAction(input_action action, int key, bool mouse);
 void InitInput();
@@ -194,5 +196,6 @@ Vector2 GetWorldMousePosition();
 //------------------------------------------------------------------------------------
 extern void PrintScreenMessage(Vector2 position, const char *text, ...);
 extern void DrawDebugItems();
+extern void DrawCircleAtWorld(Vector2 position, float size, int color);
 
 #endif //_ENGINE_H
