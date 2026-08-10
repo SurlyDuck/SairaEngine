@@ -16,7 +16,7 @@ typedef enum{
 game_state currentGameState = NONE;
 
 static const char *animationFiles[] = {
-	"./game/assets/characters_sheet/char0/Default3.sgd",
+	"./game/assets/characters_sheet/Default/Default3.sgd",
 	NULL
 };
 

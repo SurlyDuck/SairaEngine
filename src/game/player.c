@@ -17,7 +17,7 @@ static inline Vector2 GetPlayerPositionOffset();
 void InitPlayer(){
 	playerDirection = SOUTHEAST_VEC;
 	playerAnim = GetAnimationContainer();
-	SetAnimation(playerAnim, "Default", "Walking", true);
+	SetAnimation(playerAnim, "Default", "Idle", true);
 	MoveAnimation(playerAnim, playerPosition, playerDirection);
 	cameraPosition = (Vector2){playerPosition.x+64, playerPosition.y+64};
 	playerTarget = GetPlayerPositionOffset();
@@ -52,7 +52,7 @@ void UpdatePlayer(float deltaTime){
 		playerPosition.y+= dir.y * PLAYER_SPEED * deltaTime;
 		SetAnimation(playerAnim, "Default", "Walking", true);
 	}else{
-		SetAnimation(playerAnim, "Default", "Idle_Spear", true);
+		SetAnimation(playerAnim, "Default", "Idle", true);
 	}
 	
 	MoveAnimation(playerAnim, GetPlayerPosition(), (Vector2){roundf(playerDirection.x), roundf(playerDirection.y)});

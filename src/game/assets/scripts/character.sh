@@ -154,7 +154,8 @@ magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""
 magick montage -background transparent -geometry 128x128 -tile "$finalWidth""x""$y" "${granular_3_files[@]}" "$2/$animationTitle""4.png"
 
 #maybe ask for the user at the end the full path? If I move the level of the directory I store shit, it wont work.
-outputDir=$(readlink -f "$2/$animationTitle""1.png" | cut -d/ -f7-10)
+outputDir=$(readlink -f "$2/$animationTitle" | cut -d/ -f7-10)
+sed -i "9i cell = 128" temp.data
 sed -i "9i"" file = ./$outputDir/$animationTitle""1.png" temp.data
 cp temp.data "$2/$animationTitle""1.sgd"
 sed -i "9d" temp.data
