@@ -17,6 +17,10 @@ int main(){
 		return SDL_APP_FAILURE;
 	}
 	
+
+	SDL_Surface *surface = IMG_Load("./assets/duck.png");
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
 	currentState.queueID = MENU;
 	bool running = true;
 	while(running){ // Main loop
@@ -37,8 +41,13 @@ int main(){
 		}
 
 		currentState.queueID = currentState.Update(renderer);
+			
+		SDL_RenderTexture(renderer, texture, NULL, NULL);
 		
 		SDL_RenderPresent(renderer);
+		
+		// TODO: proper fps target
+		usleep(16 * 1000);
 	}
 
 	SDL_Quit();
@@ -52,10 +61,13 @@ static void InitNewState(editor_state_id newState){
 			InitMenu(&currentState);
 			break;
 		}
+		case FATAL_ERROR: exit(69);
 		default: break;
 	}
 }
 
-
+SDL_Renderer *GetRenderer(){
+	return renderer;
+}
 
 

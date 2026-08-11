@@ -8,8 +8,8 @@ all: editor run
 run:
 	./editor
 
-editor: editor.c menu.c
-	cc $(CFLAGS) -o editor editor.c menu.c $(LFLAGS)
+editor: editor.c menu.c ui.c
+	cc $(CFLAGS) -o editor editor.c menu.c ui.c $(LFLAGS)
 
 clear:
 	rm editor
