@@ -3,7 +3,7 @@
 buttons allButtons = {0};
 
 void ButtonCallback(){
-	printf("A callback has been called!");
+	printf("A callback has been called!\n");
 }
 
 void InitMenu(editor_state *state){
@@ -12,9 +12,9 @@ void InitMenu(editor_state *state){
 	state->id      = MENU;
 	
 	// Buttons
-	AddButton(&allButtons, 0, 0, 64, 64, "./assets/duck.png", ButtonCallback);
-	AddButton(&allButtons, 64, 0, 64, 64, "./assets/duck.png", ButtonCallback);
-	AddButton(&allButtons, 128, 0, 64, 64, "./assets/duck.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32-72, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32+72, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
 
 }
 
@@ -23,11 +23,12 @@ editor_state_id UpdateMenu(SDL_Renderer *renderer){
 		.x = 0,
 		.y = 0,
 		.w = WINDOW_WIDTH,
-		.h = 200
+		.h = WINDOW_HEIGHT
 	};
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_TRANSPARENT);
-	SDL_RenderFillRect(renderer, &r);
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_TRANSPARENT);
+	SDL_RenderRect(renderer, &r);
 	
+
 	DrawAllButtons(&allButtons);
 	UpdateButtons(&allButtons);
 	

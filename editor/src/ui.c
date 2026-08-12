@@ -1,6 +1,3 @@
-/*********************************************************************
-*								Editor UI elements
-**********************************************************************/
 #include "editor.h"
 
 struct button{
@@ -23,6 +20,7 @@ void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16
 	SDL_Surface *sur = IMG_Load(filePath);
 	assert(sur != NULL);
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(GetRenderer(), sur);
+	SDL_DestroySurface(sur);
 	assert(tex != NULL);
 
 	SDL_FRect btnRect = {
@@ -50,6 +48,32 @@ void DrawAllButtons(buttons *buttonsArray){
 	}
 }
 
+bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
+	int centerX = rect.x + rect.w/2;
+	int centerY = rect.y + rect.h/2;
+
+	int disX = (px > centerX) ? px - centerX : centerX - px;
+	int disY = (py > centerY) ? py - centerY : centerY - py;
+	
+	if(disX > rect.w/2 || disY > rect.h/2) 
+		return false;
+	else
+		return true;
+}
+
+// Callbacks and states
 void UpdateButtons(buttons *buttonsArray){
+	SDL_Event *event = GetInputEvents();
+	for(; event->type != 0; ++event){
+		if(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN){
+			if(event->button.button == SDL_BUTTON_LEFT){
+				for(size_t i = 0; i < buttonsArray->count; ++i){
+					if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+						buttonsArray->items[i].CallBack();
+					}
+				}
+			}
+		}
+	}
 	
 }

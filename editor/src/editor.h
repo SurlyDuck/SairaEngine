@@ -1,7 +1,7 @@
 /*********************************************************************
 *							Saíra engine main editor
 *
-* Update and initialization of functions for for each mode/state
+* Update and initialization of functions for each mode/state
 * must be declared here.
 * 
 * editor.c updates each state/mode using function pointers.
@@ -18,12 +18,15 @@
 *		- timeline: Event and quests editor for the open world
 *
 **********************************************************************/
+#ifndef _EDITOR_H
+#define _EDITOR_H
+
 #ifndef WIN_32
 #define _XOPEN_SOURCE 500
 #endif
 
-#ifndef _EDITOR_H
-#define _EDITOR_H
+#define VERSION "0.0.1"
+#define RELEASE "alpha"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,13 +35,21 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #define WINDOW_WIDTH  1360
-#define WINDOW_HEIGHT  760
+#define WINDOW_HEIGHT  730
 
 //------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
+// ...
+
+//------------------------------------------------------------------------------------
+// functions implemented in editor.c
+//------------------------------------------------------------------------------------
 SDL_Renderer *GetRenderer();
+SDL_Event *GetInputEvents(void);
+
 
 //------------------------------------------------------------------------------------
 // Types used to change between states
