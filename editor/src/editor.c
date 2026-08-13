@@ -6,12 +6,12 @@
 static SDL_Event inputEventBuffer[MAX_INPUT_EVENT_BUFFER_LEN] = {0};
 static uint8_t inputEventBufferPtr = 0;
 static SDL_Window   *window        = NULL;
-static SDL_Renderer *renderer      = NULL;
 
 // Globals
-editor_state currentState = {0};
-TTF_Font *font    = NULL;
-SDL_Surface *text    = NULL;
+editor_state currentState   = {0};
+TTF_Font *monoRegularLarge  = NULL;
+TTF_Font *monoRegularSmall  = NULL;
+SDL_Renderer *renderer      = NULL;
 
 // Func foward declarations
 static void InitNewState(editor_state_id newState);
@@ -35,7 +35,7 @@ int main(){
 	}
 	
 	LoadFonts();
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, text);
+	//SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, text);
 	//SDL_Surface *surface = IMG_Load("./assets/duck.png");
 	//SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 
@@ -63,7 +63,7 @@ int main(){
 		currentState.queueID = currentState.Update(renderer);
 				
 		//SDL_RenderTexture(renderer, texture, NULL, NULL);
-		SDL_RenderTexture(renderer, texture, NULL, NULL);
+		//SDL_RenderTexture(renderer, texture, NULL, &(SDL_FRect){WINDOW_WIDTH/2-texture->w/2,WINDOW_HEIGHT/2 -50, texture->w, texture->h});
 		SDL_RenderPresent(renderer);
 		
 		ClearInputEventBuffer();
@@ -88,30 +88,11 @@ static void InitNewState(editor_state_id newState){
 	}
 }
 
-// Just testing text rendering on this mess of an api
 static void LoadFonts(){
-	FILE *fontFile    = NULL;
-	size_t fileLen    = 0;
-	const char *raw   = NULL;
-
-	fontFile = fopen("./assets/LiberationMono-Regular.ttf", "rb");
-	assert(fontFile != NULL);
-
-	fseek(fontFile, 0, SEEK_END);
-	fileLen = ftell(fontFile);
-	assert(fileLen > 0);
-	fseek(fontFile, 0, SEEK_SET);
-		
-	raw = (const char*) malloc(fileLen);
-	size_t res = fread((char*)raw, 1, fileLen, fontFile);
-	assert(res != 0);
-	
-	font = TTF_OpenFontIO(SDL_IOFromMem((void*)raw, fileLen), true, 10.0f);
-	assert(font);
-
-	text = TTF_RenderText_Blended(font, "jesus please  work aarrgghhh", 0, (SDL_Color) { 255, 0, 0, SDL_ALPHA_TRANSPARENT});
-	
-	fclose(fontFile);
+	monoRegularLarge = TTF_OpenFont("./assets/LiberationMono-Regular.ttf", 30.0f);
+	assert(monoRegularLarge);
+	monoRegularSmall = TTF_OpenFont("./assets/LiberationMono-Regular.ttf", 15.0f);
+	assert(monoRegularSmall);
 
 }
 

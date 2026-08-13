@@ -7,8 +7,8 @@
 * editor.c updates each state/mode using function pointers.
 * A new state is assigned by returning a value from update routine.
 *
-* ui.c contains high level declarations for dealing with
-* gui elements like buttons, dropdown menus, lists etc.
+* ui.c contains low level implementations for dealing with
+* gui elements like buttons, dropdown menus, labels etc.
 *
 * Modes
 *		- Starting: goes straight to one of the modes below
@@ -40,16 +40,35 @@
 #define WINDOW_HEIGHT  730
 
 //------------------------------------------------------------------------------------
+// Macros for dealing with dynamic arrays
+//------------------------------------------------------------------------------------
+#define DA_PUSH(item,array) DA_APPEND(item, array)
+#define DA_APPEND(item, array) do {\
+	if(array->count == 0){\
+		array->items = (void*) malloc(sizeof(item) * 8);\
+		array->capacity = 8 * sizeof(item);\
+	}else if(array->capacity < sizeof(item) * (array->count+1)){\
+		array->items = (void*) realloc(array->items, sizeof(item) * (array->capacity+8));\
+		array->capacity += 8 * sizeof(item);\
+	}\
+	\
+	array->items[array->count] = item;\
+	array->count++;\
+}while(0)
+// TODO: DA_POP, DA_CLEAR
+
+//------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
-// ...
+extern TTF_Font *monoRegularLarge;
+extern TTF_Font *monoRegularSmall;
+extern SDL_Renderer *renderer;
 
 //------------------------------------------------------------------------------------
 // functions implemented in editor.c
 //------------------------------------------------------------------------------------
-SDL_Renderer *GetRenderer();
+SDL_Renderer *GetRenderer(); // deprecated
 SDL_Event *GetInputEvents(void);
-
 
 //------------------------------------------------------------------------------------
 // Types used to change between states
@@ -75,11 +94,22 @@ typedef struct{
 //------------------------------------------------------------------------------------
 extern void ExitMenu();
 extern void InitMenu(editor_state *state);
-extern editor_state_id UpdateMenu(SDL_Renderer *renderer);
 
 //------------------------------------------------------------------------------------
 // ui elements
 //------------------------------------------------------------------------------------
+typedef enum{
+	TOP_LEFT = 0,
+	TOP_CENTER,
+	TOP_RIGHT,
+	MIDDLE_LEFT,
+	MIDDLE_CENTER,
+	MIDDLE_RIGHT,
+	BOTTOM_LEFT,
+	BOTTOM_CENTER,
+	BOTTOM_RIGHT,
+}origin;
+
 typedef enum{
 	BUTTON_IDLE = 0,
 	BUTTON_HOVERED,
@@ -93,8 +123,19 @@ typedef struct{
 	size_t capacity;
 }buttons;
 
-void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *filePath, void (*CallBack)());
-void DrawAllButtons(buttons *buttonsArray);
-void UpdateButtons(buttons *buttonsArray);
+typedef struct label label;
+typedef struct{
+	label *items;
+	size_t count;
+	size_t capacity;
+}labels;
+
+extern void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *filePath, void (*CallBack)());
+extern void DrawAllButtons(buttons *buttonsArray);
+extern void UpdateButtons(buttons *buttonsArray);
+extern void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);
+extern void DrawAllLabels(labels *labelArray);
+extern void DestroyButtons(buttons *buttonArray);
+extern void DestroyLabels(labels *labelArray);
 
 #endif // EDITOR_H
