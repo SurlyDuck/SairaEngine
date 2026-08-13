@@ -19,9 +19,9 @@ void InitMenu(editor_state *state){
 	state->id      = MENU;
 	
 	// Buttons
-	AddButton(&allButtons, WINDOW_WIDTH/2-32-72, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
-	AddButton(&allButtons, WINDOW_WIDTH/2-32, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
-	AddButton(&allButtons, WINDOW_WIDTH/2-32+72, WINDOW_HEIGHT/2, 64, 64, "./assets/duck.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32-72, WINDOW_HEIGHT/2, 64, 64, "./assets/spoon.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32, WINDOW_HEIGHT/2, 64, 64, "./assets/spoonHover.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-32+72, WINDOW_HEIGHT/2, 128, 128, "./assets/spoon.png", ButtonCallback);
 	
 	// Labels
 	AddLabel("not centered", &allLabels, WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0);
