@@ -35,9 +35,6 @@ int main(){
 	}
 	
 	LoadFonts();
-	//SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, text);
-	//SDL_Surface *surface = IMG_Load("./assets/duck.png");
-	//SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 
 	currentState.queueID = MENU;
 	bool running = true;
@@ -81,6 +78,10 @@ static void InitNewState(editor_state_id newState){
 	switch(newState){
 		case MENU:{
 			InitMenu(&currentState);
+			break;
+		}
+		case LEVEL: {
+			InitLevel(&currentState);
 			break;
 		}
 		case FATAL_ERROR: exit(69);

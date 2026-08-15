@@ -3,25 +3,31 @@
 #define WHITE (SDL_Color){255, 255, 255, SDL_ALPHA_TRANSPARENT}
 
 // locals
-static buttons allButtons     = {0};
-static labels  allLabels      = {0};
+static buttons allButtons        = {0};
+static labels  allLabels         = {0};
+static editor_state_id nextState = MENU;
 
 // local forward declaration
 static editor_state_id UpdateMenu(SDL_Renderer *renderer);
-
-void ButtonCallback(){
-	printf("A callback has been called!\n");
-}
+static void _OnLevelClick();
+static void _OnWorldClick();
+static void _OnTimelineClick();
 
 void InitMenu(editor_state *state){
 	state->Update  = UpdateMenu;
 	state->Exit    = ExitMenu;
 	state->id      = MENU;
-	
+	nextState      = MENU;
+
 	// Buttons
-	AddButton(&allButtons, WINDOW_WIDTH/2-64-128-32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/spoon.png", ButtonCallback);
-	AddButton(&allButtons, WINDOW_WIDTH/2-64, WINDOW_HEIGHT/2-64, 128, 128, "./assets/globe.png", ButtonCallback);
-	AddButton(&allButtons, WINDOW_WIDTH/2-64+128+32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/clock.png", ButtonCallback);
+	AddButton(&allButtons, WINDOW_WIDTH/2-64-128-32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/spoon.png", 
+				 "./assets/spoonHover.png", "./assets/spoonPressed.png", _OnLevelClick);
+
+	AddButton(&allButtons, WINDOW_WIDTH/2-64, WINDOW_HEIGHT/2-64, 128, 128, "./assets/globe.png", 
+	"./assets/globeHover.png", "./assets/globePressed.png", _OnWorldClick);
+
+	AddButton(&allButtons, WINDOW_WIDTH/2-64+128+32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/clock.png", 
+	"./assets/clockHover.png", "./assets/clockPressed.png", _OnTimelineClick);
 	
 	// Labels
 	AddLabel("not centered", &allLabels, WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0);
@@ -53,10 +59,26 @@ editor_state_id UpdateMenu(SDL_Renderer *renderer){
 	
 	DrawAllLabels(&allLabels);
 
-	return MENU;
+	return nextState;
 }
 
+static void _OnLevelClick(){
+	printf("level click\n");
+	nextState = LEVEL;
+}
+
+static void _OnWorldClick(){
+	printf("world click\n");
+}
+
+static void _OnTimelineClick(){
+	printf("timeline click\n");
+}
+
+
+
 void ExitMenu(){
+	printf("exiting menu... \n");
 	DestroyButtons(&allButtons);
 	DestroyLabels(&allLabels);
 }

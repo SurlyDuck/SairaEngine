@@ -96,6 +96,13 @@ extern void ExitMenu();
 extern void InitMenu(editor_state *state);
 
 //------------------------------------------------------------------------------------
+// Level editor functions
+//------------------------------------------------------------------------------------
+extern void ExitLevel();
+extern void InitLevel(editor_state *state);
+
+
+//------------------------------------------------------------------------------------
 // ui elements
 //------------------------------------------------------------------------------------
 typedef enum{
@@ -130,7 +137,8 @@ typedef struct{
 	size_t capacity;
 }labels;
 
-extern void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *filePath, void (*CallBack)());
+extern void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
+ 							const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
 extern void DrawAllButtons(buttons *buttonsArray);
 extern void UpdateButtons(buttons *buttonsArray);
 extern void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);

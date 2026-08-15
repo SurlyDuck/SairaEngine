@@ -2,7 +2,9 @@
 
 struct button{
 	SDL_FRect rect;
-	SDL_Texture *texture;
+	SDL_Texture *idleTexture;
+	SDL_Texture *hoverTexture;
+	SDL_Texture *pressedTexture;
 	button_state state;
 	void (*CallBack)();
 };
@@ -12,12 +14,22 @@ struct label{
 	SDL_Texture *texture;
 };
 
-void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *filePath, void (*CallBack)()){
-	SDL_Surface *sur = IMG_Load(filePath);
-	assert(sur != NULL);
-	SDL_Texture *tex = SDL_CreateTextureFromSurface(GetRenderer(), sur);
-	SDL_DestroySurface(sur);
-	assert(tex != NULL);
+void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
+	const char *hoverTexture, const char *pressedTexture, void (*CallBack)()){
+
+	SDL_Surface *idleSur, *hoverSur, *pressedSur;
+
+	idleSur      = IMG_Load(idleTexture);
+	hoverSur     = IMG_Load(hoverTexture);
+	pressedSur   = IMG_Load(pressedTexture);
+	assert(idleSur && hoverSur && pressedSur);
+
+	SDL_Texture *idleTex = SDL_CreateTextureFromSurface(GetRenderer(), idleSur);
+	SDL_Texture *hoverTex = SDL_CreateTextureFromSurface(GetRenderer(), hoverSur);
+	SDL_Texture *pressedTex = SDL_CreateTextureFromSurface(GetRenderer(), pressedSur);
+	SDL_DestroySurface(idleSur);
+	SDL_DestroySurface(hoverSur);
+	SDL_DestroySurface(pressedSur);
 
 	SDL_FRect btnRect = {
 		.x = x,
@@ -27,7 +39,9 @@ void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16
 
 	button newBtn = {
 		.rect = btnRect, 
-		.texture = tex,
+		.idleTexture = idleTex,
+		.hoverTexture = hoverTex,
+		.pressedTexture = pressedTex,
 		.state = BUTTON_IDLE,
 		.CallBack = CallBack};
 
@@ -65,7 +79,14 @@ void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF
 // TODO: a bit of repetition; maybe a macro can replace DrawAllButtons() and DrawAllLabels()
 void DrawAllButtons(buttons *buttonsArray){
 	for(size_t i = 0; i < buttonsArray->count; ++i){
-		SDL_Texture *btnTexture = buttonsArray->items[i].texture;
+		SDL_Texture *btnTexture; //= buttonsArray->items[i].idleTexture;
+		switch(buttonsArray->items[i].state){
+			case BUTTON_HOVERED: btnTexture = buttonsArray->items[i].hoverTexture; break;
+			case BUTTON_PRESSED: btnTexture = buttonsArray->items[i].pressedTexture; break;
+			default: btnTexture = buttonsArray->items[i].idleTexture; break;
+			
+		}
+
 		SDL_FRect    btnRect    = buttonsArray->items[i].rect;
 		SDL_RenderTexture(GetRenderer(), btnTexture, NULL, &btnRect);
 	}
@@ -95,17 +116,45 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 void UpdateButtons(buttons *buttonsArray){
 	SDL_Event *event = GetInputEvents();
 	for(; event->type != 0; ++event){
-		if(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN){
-			if(event->button.button == SDL_BUTTON_LEFT){
-				for(size_t i = 0; i < buttonsArray->count; ++i){
-					if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
-						buttonsArray->items[i].CallBack();
+		switch(event->type){
+			case SDL_EVENT_MOUSE_BUTTON_DOWN :{
+				if(event->button.button == SDL_BUTTON_LEFT){
+					for(size_t i = 0; i < buttonsArray->count; ++i){
+						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+							buttonsArray->items[i].state = BUTTON_PRESSED;
+							break;
+						}
 					}
 				}
+				break;
 			}
+			case SDL_EVENT_MOUSE_BUTTON_UP :{
+				if(event->button.button == SDL_BUTTON_LEFT){
+					for(size_t i = 0; i < buttonsArray->count; ++i){
+						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+							buttonsArray->items[i].state = BUTTON_IDLE;
+							buttonsArray->items[i].CallBack();
+							break;
+						}
+					}
+				}
+				break;
+			}
+			case SDL_EVENT_MOUSE_MOTION: {
+			bool alreadyHovering = false;
+			for(size_t i = 0; i < buttonsArray->count; ++i){
+				if(alreadyHovering) {buttonsArray->items[i].state = BUTTON_IDLE; continue;}
+
+				if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+					buttonsArray->items[i].state = BUTTON_HOVERED;
+					alreadyHovering = true;
+				}else buttonsArray->items[i].state = BUTTON_IDLE;
+			}
+				break;
+			}
+			default: break;
 		}
 	}
-	
 }
 
 void DestroyLabels(labels *labelArray){
