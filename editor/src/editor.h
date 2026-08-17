@@ -39,6 +39,9 @@
 #define WINDOW_WIDTH  1360
 #define WINDOW_HEIGHT  730
 
+#define WHITE (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE}
+#define RED (SDL_Color){255, 0, 0, SDL_ALPHA_OPAQUE}
+
 //------------------------------------------------------------------------------------
 // Macros for dealing with dynamic arrays
 //------------------------------------------------------------------------------------
@@ -55,12 +58,13 @@
 	array->items[array->count] = item;\
 	array->count++;\
 }while(0)
-// TODO: DA_POP, DA_CLEAR
+// TODO: DA_POP
 
 //------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
 extern TTF_Font *monoRegularLarge;
+extern TTF_Font *monoRegularMedium;
 extern TTF_Font *monoRegularSmall;
 extern SDL_Renderer *renderer;
 
@@ -103,7 +107,9 @@ extern void InitLevel(editor_state *state);
 
 
 //------------------------------------------------------------------------------------
-// ui elements
+// gui elements
+// TODO: is better to let ui.c handle each dynamic array of gui elements.
+// TODO: move every draw and update call to a UpdateGuiElements() inside ui.c.
 //------------------------------------------------------------------------------------
 typedef enum{
 	TOP_LEFT = 0,
@@ -124,11 +130,6 @@ typedef enum{
 }button_state;
 
 typedef struct button button;
-typedef struct{
-	button *items;
-	size_t count;
-	size_t capacity;
-}buttons;
 
 typedef struct label label;
 typedef struct{
@@ -137,13 +138,15 @@ typedef struct{
 	size_t capacity;
 }labels;
 
-extern void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
- 							const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
-extern void DrawAllButtons(buttons *buttonsArray);
-extern void UpdateButtons(buttons *buttonsArray);
+typedef struct menu_list menu_list;
+
+extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
+extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)());
 extern void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);
 extern void DrawAllLabels(labels *labelArray);
-extern void DestroyButtons(buttons *buttonArray);
-extern void DestroyLabels(labels *labelArray);
+extern void UpdateGuiElements();
+extern void DestroyGuiElements();
+extern void ShowMenuList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val),
+								origin or);
 
 #endif // EDITOR_H

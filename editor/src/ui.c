@@ -9,16 +9,49 @@ struct button{
 	void (*CallBack)();
 };
 
+typedef struct{
+	button *items;
+	size_t count;
+	size_t capacity;
+}buttons;
+
 struct label{
 	SDL_FRect rect;
 	SDL_Texture *texture;
 };
 
-void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
+// A window containing a list of values the user can select
+// The selected value is given on callback
+// Only one at each time
+struct menu_list{
+	bool active;
+	const char **values;
+	SDL_FRect rect;
+	uint8_t selected;
+	origin anchor;
+	void (*Callback)(const char *val);
+};
+
+// Locals
+static struct menu_list currentList = {0};
+static buttons allButtons = {0};
+
+
+// TODO: the rest of the anchors
+void AlignRect(SDL_FRect *rect, origin or){
+	switch(or){
+		case TOP_LEFT: break; // SDL standard
+		case MIDDLE_CENTER: rect->x -= rect->w/2.00f; rect->y -= rect->h/2.00f; break;
+		case BOTTOM_RIGHT:  rect->x -= rect->w;       rect->y -= rect->h; break;
+		default: break;
+	
+}
+
+void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
 	const char *hoverTexture, const char *pressedTexture, void (*CallBack)()){
 
 	SDL_Surface *idleSur, *hoverSur, *pressedSur;
-
+	
 	idleSur      = IMG_Load(idleTexture);
 	hoverSur     = IMG_Load(hoverTexture);
 	pressedSur   = IMG_Load(pressedTexture);
@@ -44,8 +77,63 @@ void AddButton(buttons *buttonsArray, uint16_t x, uint16_t y, uint16_t w, uint16
 		.pressedTexture = pressedTex,
 		.state = BUTTON_IDLE,
 		.CallBack = CallBack};
+	
+	DA_APPEND(newBtn, (&allButtons));
+}
 
-	DA_APPEND(newBtn, buttonsArray);
+#define BTN_STANDARD_BG_COLOR 0, 255, 0, SDL_ALPHA_OPAQUE
+#define BTN_STANDARD_FG_COLOR 0, 0, 255, SDL_ALPHA_OPAQUE
+
+void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)()){
+	SDL_Texture *idleTexture, *hoverTexture, *pressedTexture, *fontTexture;
+	SDL_FRect btnRect = {.x = x, .y = y, .w = w, .h = h };
+
+	// Create font texture
+	SDL_Surface *fontSurface = TTF_RenderText_Blended(font, text, 0, WHITE);
+	fontTexture = SDL_CreateTextureFromSurface(renderer, fontSurface);
+	SDL_DestroySurface(fontSurface);
+	
+	// Create each button state texture as a target to render on
+	idleTexture    = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+	hoverTexture   = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+	pressedTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+	
+	// Idle texture rendering
+	SDL_SetRenderTarget(renderer, idleTexture);
+	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_BG_COLOR);
+	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w, .h = h});
+	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_FG_COLOR);
+	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w-4, .h = h-4});
+	SDL_RenderTexture(renderer, fontTexture, NULL, &(SDL_FRect){w/2-fontTexture->w/2, h/2-fontTexture->h/2, fontTexture->w, fontTexture->h});
+	
+
+	// Hovering texture rendering
+	SDL_SetRenderTarget(renderer, hoverTexture);
+	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_FG_COLOR);
+	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w, .h = h});
+	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_BG_COLOR);
+	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w-4, .h = h-4});
+	SDL_RenderTexture(renderer, fontTexture, NULL, &(SDL_FRect){w/2-fontTexture->w/2, h/2-fontTexture->h/2, fontTexture->w, fontTexture->h});
+
+	// Pressed texture rendering
+	SDL_SetRenderTarget(renderer, pressedTexture);
+	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_FG_COLOR);
+	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w, .h = h});
+	SDL_RenderTexture(renderer, fontTexture, NULL, &(SDL_FRect){w/2-fontTexture->w/2+4, h/2-fontTexture->h/2+4, fontTexture->w, fontTexture->h});
+
+	SDL_SetRenderTarget(renderer, NULL);
+
+	SDL_DestroyTexture(fontTexture);
+
+	button newBtn = {
+		.rect = btnRect, 
+		.idleTexture = idleTexture,
+		.hoverTexture = hoverTexture,
+		.pressedTexture = pressedTexture,
+		.state = BUTTON_IDLE,
+		.CallBack = Callback};
+
+	DA_APPEND(newBtn, (&allButtons));
 	
 }
 
@@ -59,38 +147,44 @@ void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF
 		.y = y,
 		.w = tex->w,
 		.h = tex->h};
-	
-	// TODO: better to factor this since will probably be used somewhere else
-	switch(or){
-		case TOP_LEFT: break; // SDL standard
-		case MIDDLE_CENTER: rect.x -= tex->w/2.00f; rect.y -= tex->h/2.00f; break;
-		case BOTTOM_RIGHT:  rect.x -= tex->w;       rect.y -= tex->h; break;
-		default: break;
-	}
+		
+	AlignRect(&rect, or);
 
 	label newLabel = {
 		.texture = tex,
 		.rect    = rect};
 
 	DA_APPEND(newLabel, labelsArray);
-	
+}
+
+void ShowMenuList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or){
+		SDL_FRect rect = {.x = x, .y = y, .w = w, .h = h};
+		AlignRect(&rect, or);
+		currentList = (menu_list) {
+		.rect = rect,
+		.active = true,
+		.selected = 0,
+		.Callback = Callback,
+		.values = list,
+		.anchor = or};
 }
 
 // TODO: a bit of repetition; maybe a macro can replace DrawAllButtons() and DrawAllLabels()
-void DrawAllButtons(buttons *buttonsArray){
-	for(size_t i = 0; i < buttonsArray->count; ++i){
+static void DrawAllButtons(){
+	for(size_t i = 0; i < allButtons.count; ++i){
 		SDL_Texture *btnTexture; //= buttonsArray->items[i].idleTexture;
-		switch(buttonsArray->items[i].state){
-			case BUTTON_HOVERED: btnTexture = buttonsArray->items[i].hoverTexture; break;
-			case BUTTON_PRESSED: btnTexture = buttonsArray->items[i].pressedTexture; break;
-			default: btnTexture = buttonsArray->items[i].idleTexture; break;
+		switch(allButtons.items[i].state){
+			case BUTTON_HOVERED: btnTexture = allButtons.items[i].hoverTexture; break;
+			case BUTTON_PRESSED: btnTexture = allButtons.items[i].pressedTexture; break;
+			default:             btnTexture = allButtons.items[i].idleTexture; break;
 			
 		}
 
-		SDL_FRect    btnRect    = buttonsArray->items[i].rect;
+		SDL_FRect    btnRect    = allButtons.items[i].rect;
 		SDL_RenderTexture(GetRenderer(), btnTexture, NULL, &btnRect);
 	}
 }
+
 void DrawAllLabels(labels *labelArray){
 	for(size_t i = 0; i < labelArray->count; ++i){
 		SDL_Texture *labelTexture  = labelArray->items[i].texture;
@@ -114,14 +208,42 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 
 // Callbacks and states
 void UpdateButtons(buttons *buttonsArray){
+}
+
+#define MENULIST_BG_COLOR 0, 255, 0, SDL_ALPHA_OPAQUE
+#define MENULIST_FG_COLOR 0, 0, 255, SDL_ALPHA_OPAQUE
+
+void UpdateGuiElements(){
+	// Drawing subroutines
+	DrawAllButtons();
+
+	if(currentList.active){ // Menu list
+		SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
+		SDL_RenderFillRect(renderer, &currentList.rect);
+
+		SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
+		SDL_RenderFillRect(renderer, &(SDL_FRect){currentList.rect.x, currentList.rect.y, currentList.rect.w-4, currentList.rect.h-4});
+	
+		int i = 0;
+		while(currentList.values[i] != NULL){
+			SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentList.values[i], 0, WHITE);
+			SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
+			SDL_DestroySurface(sur);
+			
+			SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentList.rect.x + currentList.rect.w/2 - tex->w/2, currentList.rect.y + i*20 + 4, tex->w, tex->h});
+			SDL_DestroyTexture(tex);
+			i++;
+		}		
+	}
+
 	SDL_Event *event = GetInputEvents();
 	for(; event->type != 0; ++event){
 		switch(event->type){
 			case SDL_EVENT_MOUSE_BUTTON_DOWN :{
 				if(event->button.button == SDL_BUTTON_LEFT){
-					for(size_t i = 0; i < buttonsArray->count; ++i){
-						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
-							buttonsArray->items[i].state = BUTTON_PRESSED;
+					for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
+						if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
+							allButtons.items[i].state = BUTTON_PRESSED;
 							break;
 						}
 					}
@@ -130,10 +252,10 @@ void UpdateButtons(buttons *buttonsArray){
 			}
 			case SDL_EVENT_MOUSE_BUTTON_UP :{
 				if(event->button.button == SDL_BUTTON_LEFT){
-					for(size_t i = 0; i < buttonsArray->count; ++i){
+					for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
 						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
-							buttonsArray->items[i].state = BUTTON_IDLE;
-							buttonsArray->items[i].CallBack();
+							allButtons.items[i].state = BUTTON_HOVERED;
+							allButtons.items[i].CallBack();
 							break;
 						}
 					}
@@ -142,19 +264,20 @@ void UpdateButtons(buttons *buttonsArray){
 			}
 			case SDL_EVENT_MOUSE_MOTION: {
 			bool alreadyHovering = false;
-			for(size_t i = 0; i < buttonsArray->count; ++i){
-				if(alreadyHovering) {buttonsArray->items[i].state = BUTTON_IDLE; continue;}
+			for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
+				if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
 
 				if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
-					buttonsArray->items[i].state = BUTTON_HOVERED;
+					allButtons.items[i].state = BUTTON_HOVERED;
 					alreadyHovering = true;
-				}else buttonsArray->items[i].state = BUTTON_IDLE;
+				}else allButtons.items[i].state = BUTTON_IDLE;
 			}
 				break;
 			}
 			default: break;
 		}
 	}
+
 }
 
 void DestroyLabels(labels *labelArray){
@@ -162,5 +285,23 @@ void DestroyLabels(labels *labelArray){
 }
 
 void DestroyButtons(buttons *buttonArray){
- // TODO
+	for(size_t i = 0; i < buttonArray->count; ++i){
+		SDL_DestroyTexture(buttonArray->items[i].idleTexture);
+		SDL_DestroyTexture(buttonArray->items[i].hoverTexture);
+		SDL_DestroyTexture(buttonArray->items[i].pressedTexture);
+	}
+	free(buttonArray->items);
+
+	buttonArray->items = NULL;
+	buttonArray->count = 0;
+	buttonArray->capacity = 0;
+	
+}
+
+void DestroyMenuList(){
+
+}
+
+void DestroyGuiElements(){
+
 }

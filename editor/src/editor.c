@@ -8,10 +8,11 @@ static uint8_t inputEventBufferPtr = 0;
 static SDL_Window   *window        = NULL;
 
 // Globals
-editor_state currentState   = {0};
-TTF_Font *monoRegularLarge  = NULL;
-TTF_Font *monoRegularSmall  = NULL;
-SDL_Renderer *renderer      = NULL;
+editor_state currentState    = {0};
+TTF_Font *monoRegularLarge   = NULL;
+TTF_Font *monoRegularSmall   = NULL;
+TTF_Font *monoRegularMedium  = NULL;
+SDL_Renderer *renderer       = NULL;
 
 // Func foward declarations
 static void InitNewState(editor_state_id newState);
@@ -92,6 +93,8 @@ static void InitNewState(editor_state_id newState){
 static void LoadFonts(){
 	monoRegularLarge = TTF_OpenFont("./assets/LiberationMono-Regular.ttf", 30.0f);
 	assert(monoRegularLarge);
+	monoRegularMedium = TTF_OpenFont("./assets/LiberationMono-Regular.ttf", 20.0f);
+	assert(monoRegularMedium);
 	monoRegularSmall = TTF_OpenFont("./assets/LiberationMono-Regular.ttf", 15.0f);
 	assert(monoRegularSmall);
 

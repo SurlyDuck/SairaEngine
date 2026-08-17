@@ -1,9 +1,6 @@
 #include "editor.h"
 
-#define WHITE (SDL_Color){255, 255, 255, SDL_ALPHA_TRANSPARENT}
-
-// locals
-static buttons allButtons        = {0};
+// Locals
 static labels  allLabels         = {0};
 static editor_state_id nextState = MENU;
 
@@ -20,13 +17,13 @@ void InitMenu(editor_state *state){
 	nextState      = MENU;
 
 	// Buttons
-	AddButton(&allButtons, WINDOW_WIDTH/2-64-128-32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/spoon.png", 
+	AddButton(WINDOW_WIDTH/2-64-128-32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/spoon.png", 
 				 "./assets/spoonHover.png", "./assets/spoonPressed.png", _OnLevelClick);
 
-	AddButton(&allButtons, WINDOW_WIDTH/2-64, WINDOW_HEIGHT/2-64, 128, 128, "./assets/globe.png", 
+	AddButton(WINDOW_WIDTH/2-64, WINDOW_HEIGHT/2-64, 128, 128, "./assets/globe.png", 
 	"./assets/globeHover.png", "./assets/globePressed.png", _OnWorldClick);
 
-	AddButton(&allButtons, WINDOW_WIDTH/2-64+128+32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/clock.png", 
+	AddButton(WINDOW_WIDTH/2-64+128+32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/clock.png", 
 	"./assets/clockHover.png", "./assets/clockPressed.png", _OnTimelineClick);
 	
 	// Labels
@@ -53,9 +50,8 @@ editor_state_id UpdateMenu(SDL_Renderer *renderer){
 	
 	//SDL_RenderTexture(GetRenderer(), menuTitle, NULL, &(SDL_FRect){WINDOW_WIDTH/2-menuTitle->w/2, 
 	//WINDOW_HEIGHT/2 - 50, menuTitle->w, menuTitle->h});
-
-	DrawAllButtons(&allButtons);
-	UpdateButtons(&allButtons);
+	UpdateGuiElements();
+	//UpdateButtons(&allButtons);
 	
 	DrawAllLabels(&allLabels);
 
@@ -75,11 +71,8 @@ static void _OnTimelineClick(){
 	printf("timeline click\n");
 }
 
-
-
 void ExitMenu(){
 	printf("exiting menu... \n");
-	DestroyButtons(&allButtons);
-	DestroyLabels(&allLabels);
+	DestroyGuiElements();
 }
 
