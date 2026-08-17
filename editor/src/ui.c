@@ -45,6 +45,7 @@ void AlignRect(SDL_FRect *rect, origin or){
 		case BOTTOM_RIGHT:  rect->x -= rect->w;       rect->y -= rect->h; break;
 		default: break;
 	
+	}
 }
 
 void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,
@@ -206,10 +207,6 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 		return true;
 }
 
-// Callbacks and states
-void UpdateButtons(buttons *buttonsArray){
-}
-
 #define MENULIST_BG_COLOR 0, 255, 0, SDL_ALPHA_OPAQUE
 #define MENULIST_FG_COLOR 0, 0, 255, SDL_ALPHA_OPAQUE
 
@@ -253,7 +250,7 @@ void UpdateGuiElements(){
 			case SDL_EVENT_MOUSE_BUTTON_UP :{
 				if(event->button.button == SDL_BUTTON_LEFT){
 					for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
-						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+						if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
 							allButtons.items[i].state = BUTTON_HOVERED;
 							allButtons.items[i].CallBack();
 							break;
@@ -267,7 +264,7 @@ void UpdateGuiElements(){
 			for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
 				if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
 
-				if(IsPointOverlayingRect(event->button.x, event->button.y, buttonsArray->items[i].rect)){
+				if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
 					allButtons.items[i].state = BUTTON_HOVERED;
 					alreadyHovering = true;
 				}else allButtons.items[i].state = BUTTON_IDLE;
