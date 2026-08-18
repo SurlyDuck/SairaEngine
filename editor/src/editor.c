@@ -42,12 +42,16 @@ int main(){
 	while(running){ // <-- Main loop -->
 		SDL_Event event;
 		while(SDL_PollEvent(&event)){
-			if(event.type == SDL_EVENT_QUIT || event.key.key == SDLK_ESCAPE){
+			if(event.type == SDL_EVENT_QUIT){
 				running = false;
 			  	break;
 			}else if(event.type == SDL_EVENT_KEY_DOWN || SDL_EVENT_MOUSE_BUTTON_DOWN){
 				AddInputEventBuffer(event);
-			}else continue;
+				if(event.key.key == SDLK_ESCAPE && !IsGuiBusy()){ 
+					running = false;
+					break;
+				}
+			}
 		}
 		
 		SDL_SetRenderDrawColor(renderer, 18, 18, 18, SDL_ALPHA_TRANSPARENT);

@@ -60,6 +60,13 @@
 }while(0)
 // TODO: DA_POP
 
+#define DA_CLEAR(array) do{\
+	free(array->items);\
+	array->items = NULL;\
+	array->count = 0;\
+	array->capacity = 0;\
+}while(0)
+
 //------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
@@ -123,30 +130,14 @@ typedef enum{
 	BOTTOM_RIGHT,
 }origin;
 
-typedef enum{
-	BUTTON_IDLE = 0,
-	BUTTON_HOVERED,
-	BUTTON_PRESSED
-}button_state;
 
-typedef struct button button;
-
-typedef struct label label;
-typedef struct{
-	label *items;
-	size_t count;
-	size_t capacity;
-}labels;
-
-typedef struct menu_list menu_list;
 
 extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
 extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)());
-extern void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);
-extern void DrawAllLabels(labels *labelArray);
+extern void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);
 extern void UpdateGuiElements();
 extern void DestroyGuiElements();
-extern void ShowMenuList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val),
-								origin or);
+extern void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or);
+extern bool IsGuiBusy();
 
 #endif // EDITOR_H

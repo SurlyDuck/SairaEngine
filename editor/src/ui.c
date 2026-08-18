@@ -1,13 +1,19 @@
 #include "editor.h"
 
-struct button{
+typedef enum{
+	BUTTON_IDLE = 0,
+	BUTTON_HOVERED,
+	BUTTON_PRESSED
+}button_state;
+
+typedef struct button{
 	SDL_FRect rect;
 	SDL_Texture *idleTexture;
 	SDL_Texture *hoverTexture;
 	SDL_Texture *pressedTexture;
 	button_state state;
 	void (*CallBack)();
-};
+}button;
 
 typedef struct{
 	button *items;
@@ -15,27 +21,34 @@ typedef struct{
 	size_t capacity;
 }buttons;
 
-struct label{
+typedef struct label{
 	SDL_FRect rect;
 	SDL_Texture *texture;
-};
+}label;
+
+typedef struct{
+	label *items;
+	size_t count;
+	size_t capacity;
+}labels;
 
 // A window containing a list of values the user can select
 // The selected value is given on callback
 // Only one at each time
-struct menu_list{
+// values does not point to the heap
+typedef struct context_menu{
 	bool active;
 	const char **values;
 	SDL_FRect rect;
 	uint8_t selected;
 	origin anchor;
 	void (*Callback)(const char *val);
-};
+}context_menu;
 
 // Locals
-static struct menu_list currentList = {0};
+static struct context_menu currentContextMenu = {0};
 static buttons allButtons = {0};
-
+static labels  allLabels  = {0};
 
 // TODO: the rest of the anchors
 void AlignRect(SDL_FRect *rect, origin or){
@@ -107,7 +120,6 @@ void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *te
 	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w-4, .h = h-4});
 	SDL_RenderTexture(renderer, fontTexture, NULL, &(SDL_FRect){w/2-fontTexture->w/2, h/2-fontTexture->h/2, fontTexture->w, fontTexture->h});
 	
-
 	// Hovering texture rendering
 	SDL_SetRenderTarget(renderer, hoverTexture);
 	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_FG_COLOR);
@@ -138,7 +150,7 @@ void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *te
 	
 }
 
-void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or){
+void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or){
 	SDL_Surface *sur = TTF_RenderText_Blended(font, text, 0, color);
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
 	SDL_DestroySurface(sur);
@@ -155,13 +167,13 @@ void AddLabel(const char *text, labels *labelsArray, uint16_t x, uint16_t y, TTF
 		.texture = tex,
 		.rect    = rect};
 
-	DA_APPEND(newLabel, labelsArray);
+	DA_APPEND(newLabel, (&allLabels));
 }
 
-void ShowMenuList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or){
+void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or){
 		SDL_FRect rect = {.x = x, .y = y, .w = w, .h = h};
 		AlignRect(&rect, or);
-		currentList = (menu_list) {
+		currentContextMenu = (context_menu) {
 		.rect = rect,
 		.active = true,
 		.selected = 0,
@@ -170,7 +182,7 @@ void ShowMenuList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *li
 		.anchor = or};
 }
 
-// TODO: a bit of repetition; maybe a macro can replace DrawAllButtons() and DrawAllLabels()
+// TODO: a bit of repetition; maybe a macro can replace all drawing subroutines
 static void DrawAllButtons(){
 	for(size_t i = 0; i < allButtons.count; ++i){
 		SDL_Texture *btnTexture; //= buttonsArray->items[i].idleTexture;
@@ -182,15 +194,45 @@ static void DrawAllButtons(){
 		}
 
 		SDL_FRect    btnRect    = allButtons.items[i].rect;
-		SDL_RenderTexture(GetRenderer(), btnTexture, NULL, &btnRect);
+		SDL_RenderTexture(renderer, btnTexture, NULL, &btnRect);
 	}
 }
 
-void DrawAllLabels(labels *labelArray){
-	for(size_t i = 0; i < labelArray->count; ++i){
-		SDL_Texture *labelTexture  = labelArray->items[i].texture;
-		SDL_FRect    labelRect     = labelArray->items[i].rect;
+void DrawAllLabels(){
+	for(size_t i = 0; i < allLabels.count; ++i){
+		SDL_Texture *labelTexture  = allLabels.items[i].texture;
+		SDL_FRect    labelRect     = allLabels.items[i].rect;
 		SDL_RenderTexture(GetRenderer(), labelTexture, NULL, &labelRect);
+	}
+}
+
+#define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
+#define MENULIST_FG_COLOR 0, 0, 255,   SDL_ALPHA_OPAQUE
+#define MENULIST_SL_COLOR 155, 155, 155, SDL_ALPHA_OPAQUE
+#define MENULIST_PADDING 20 + 4
+void DrawContextMenu(){
+	if(currentContextMenu.active){
+		SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
+		SDL_RenderFillRect(renderer, &currentContextMenu.rect);
+
+		SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
+		SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y, currentContextMenu.rect.w-4, currentContextMenu.rect.h-4});
+	
+		int i = 0;
+		while(currentContextMenu.values[i] != NULL){ // Very dangerous
+			SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentContextMenu.values[i], 0, WHITE);
+			SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
+			SDL_DestroySurface(sur);
+
+			if(currentContextMenu.selected == i){
+				SDL_SetRenderDrawColor(renderer, MENULIST_SL_COLOR);
+				SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y + i *MENULIST_PADDING, currentContextMenu.rect.w, 15});
+			}
+		
+			SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentContextMenu.rect.x + currentContextMenu.rect.w/2 - tex->w/2, currentContextMenu.rect.y + i* MENULIST_PADDING, tex->w, tex->h});
+			SDL_DestroyTexture(tex);
+			i++;
+		}		
 	}
 }
 
@@ -207,31 +249,12 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 		return true;
 }
 
-#define MENULIST_BG_COLOR 0, 255, 0, SDL_ALPHA_OPAQUE
-#define MENULIST_FG_COLOR 0, 0, 255, SDL_ALPHA_OPAQUE
 
 void UpdateGuiElements(){
 	// Drawing subroutines
 	DrawAllButtons();
-
-	if(currentList.active){ // Menu list
-		SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
-		SDL_RenderFillRect(renderer, &currentList.rect);
-
-		SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
-		SDL_RenderFillRect(renderer, &(SDL_FRect){currentList.rect.x, currentList.rect.y, currentList.rect.w-4, currentList.rect.h-4});
-	
-		int i = 0;
-		while(currentList.values[i] != NULL){
-			SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentList.values[i], 0, WHITE);
-			SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
-			SDL_DestroySurface(sur);
-			
-			SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentList.rect.x + currentList.rect.w/2 - tex->w/2, currentList.rect.y + i*20 + 4, tex->w, tex->h});
-			SDL_DestroyTexture(tex);
-			i++;
-		}		
-	}
+	DrawAllLabels();
+	DrawContextMenu();
 
 	SDL_Event *event = GetInputEvents();
 	for(; event->type != 0; ++event){
@@ -243,6 +266,13 @@ void UpdateGuiElements(){
 							allButtons.items[i].state = BUTTON_PRESSED;
 							break;
 						}
+					}
+					
+					if(currentContextMenu.active){ // Context menu
+						currentContextMenu.active = false;
+						if(IsPointOverlayingRect(event->button.x, event->button.y, currentContextMenu.rect)){
+							currentContextMenu.Callback(currentContextMenu.values[currentContextMenu.selected]);
+						}					
 					}
 				}
 				break;
@@ -260,45 +290,56 @@ void UpdateGuiElements(){
 				break;
 			}
 			case SDL_EVENT_MOUSE_MOTION: {
-			bool alreadyHovering = false;
-			for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
-				if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
+				bool alreadyHovering = false;
+				for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
+					if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
 
-				if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
-					allButtons.items[i].state = BUTTON_HOVERED;
-					alreadyHovering = true;
-				}else allButtons.items[i].state = BUTTON_IDLE;
-			}
-				break;
-			}
+					if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
+						allButtons.items[i].state = BUTTON_HOVERED;
+						alreadyHovering = true;
+					}else allButtons.items[i].state = BUTTON_IDLE;
+				}
+				
+				if(currentContextMenu.active){  // Context menu
+					float itemHeight = TTF_GetFontSize(monoRegularSmall); // Values in the list use this font
+					if(IsPointOverlayingRect(event->button.x, event->button.y, currentContextMenu.rect)){
+						for(int i = 0; currentContextMenu.values[i] != NULL; ++i){
+							float itemTop = currentContextMenu.rect.y + i * MENULIST_PADDING;
+							
+							if(event->button.y >= itemTop && event->button.y <= itemTop + itemHeight){
+								currentContextMenu.selected = i;
+								break;
+							}
+						}					
+					}							
+				}
+					break;
+				}
 			default: break;
 		}
 	}
 
 }
 
-void DestroyLabels(labels *labelArray){
- // TODO
-}
-
-void DestroyButtons(buttons *buttonArray){
-	for(size_t i = 0; i < buttonArray->count; ++i){
-		SDL_DestroyTexture(buttonArray->items[i].idleTexture);
-		SDL_DestroyTexture(buttonArray->items[i].hoverTexture);
-		SDL_DestroyTexture(buttonArray->items[i].pressedTexture);
-	}
-	free(buttonArray->items);
-
-	buttonArray->items = NULL;
-	buttonArray->count = 0;
-	buttonArray->capacity = 0;
-	
-}
-
-void DestroyMenuList(){
-
+bool IsGuiBusy(){
+	return currentContextMenu.active;
 }
 
 void DestroyGuiElements(){
+	// Buttons
+	for(size_t i = 0; i < allButtons.count; ++i){
+		SDL_DestroyTexture(allButtons.items[i].idleTexture);
+		SDL_DestroyTexture(allButtons.items[i].hoverTexture);
+		SDL_DestroyTexture(allButtons.items[i].pressedTexture);
+	}
+	DA_CLEAR((&allButtons));
 
+	// Labels
+	for(size_t i = 0; i < allLabels.count; ++i){
+		SDL_DestroyTexture(allLabels.items[i].texture);
+	}
+	DA_CLEAR((&allLabels));
+
+	// Menu list
+	currentContextMenu.active = false;
 }

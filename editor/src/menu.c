@@ -1,7 +1,6 @@
 #include "editor.h"
 
 // Locals
-static labels  allLabels         = {0};
 static editor_state_id nextState = MENU;
 
 // local forward declaration
@@ -19,21 +18,15 @@ void InitMenu(editor_state *state){
 	// Buttons
 	AddButton(WINDOW_WIDTH/2-64-128-32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/spoon.png", 
 				 "./assets/spoonHover.png", "./assets/spoonPressed.png", _OnLevelClick);
-
 	AddButton(WINDOW_WIDTH/2-64, WINDOW_HEIGHT/2-64, 128, 128, "./assets/globe.png", 
 	"./assets/globeHover.png", "./assets/globePressed.png", _OnWorldClick);
-
 	AddButton(WINDOW_WIDTH/2-64+128+32, WINDOW_HEIGHT/2-64, 128, 128, "./assets/clock.png", 
 	"./assets/clockHover.png", "./assets/clockPressed.png", _OnTimelineClick);
 	
 	// Labels
-	AddLabel("not centered", &allLabels, WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0);
-	AddLabel("centered", &allLabels, WINDOW_WIDTH/2, 40, monoRegularLarge, WHITE, MIDDLE_CENTER);
-	AddLabel(VERSION RELEASE, &allLabels, WINDOW_WIDTH, WINDOW_HEIGHT, monoRegularSmall, WHITE, BOTTOM_RIGHT);
-
-	//SDL_Surface *titleSurface = TTF_RenderText_Blended(monoRegularLarge, "Hello", 0, WHITE);
-	//menuTitle = SDL_CreateTextureFromSurface(GetRenderer(), titleSurface);
-	//SDL_DestroySurface(titleSurface);
+	AddLabel("not centered", WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0);
+	AddLabel("centered", WINDOW_WIDTH/2, 40, monoRegularLarge, WHITE, MIDDLE_CENTER);
+	AddLabel(VERSION RELEASE, WINDOW_WIDTH, WINDOW_HEIGHT, monoRegularSmall, WHITE, BOTTOM_RIGHT);
 
 }
 
@@ -45,15 +38,10 @@ editor_state_id UpdateMenu(SDL_Renderer *renderer){
 		.w = WINDOW_WIDTH,
 		.h = WINDOW_HEIGHT
 	};
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_TRANSPARENT);
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 	SDL_RenderRect(renderer, &r);
 	
-	//SDL_RenderTexture(GetRenderer(), menuTitle, NULL, &(SDL_FRect){WINDOW_WIDTH/2-menuTitle->w/2, 
-	//WINDOW_HEIGHT/2 - 50, menuTitle->w, menuTitle->h});
 	UpdateGuiElements();
-	//UpdateButtons(&allButtons);
-	
-	DrawAllLabels(&allLabels);
 
 	return nextState;
 }
