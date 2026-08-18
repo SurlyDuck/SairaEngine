@@ -133,7 +133,8 @@ void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *te
 	SDL_SetRenderDrawColor(renderer, BTN_STANDARD_FG_COLOR);
 	SDL_RenderFillRect(renderer, &(SDL_FRect){.x = 0, .y = 0, .w = w, .h = h});
 	SDL_RenderTexture(renderer, fontTexture, NULL, &(SDL_FRect){w/2-fontTexture->w/2+4, h/2-fontTexture->h/2+4, fontTexture->w, fontTexture->h});
-
+	
+	// Set the render target back to the main window
 	SDL_SetRenderTarget(renderer, NULL);
 
 	SDL_DestroyTexture(fontTexture);
