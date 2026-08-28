@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "./nfd/nfd.h"
 
 #define CAMERA_SPEED 900
 
@@ -14,9 +15,9 @@ const char *gridValues[] = {
 };
 
 const char *directories[] = {
-	"Load Walls",
-	"Load floors",
-	"Load Misc.",
+	"Walls",
+	"Floors",
+	"Misc.",
 	NULL
 };
 
@@ -39,6 +40,7 @@ static void _OnButtonBack();
 static void _OnButtonGridSize();
 static void _OnButtonLoadTileset();
 static void _OnChangeGridSize(const char *newVal);
+static void _OnLoadTileset(const char *newVal);
 static bool IsMouseBeingDragged(float *mouseXMotion, float *mouseYMotion);
 
 void ExitLevel();
@@ -74,7 +76,7 @@ void InitLevel(editor_state *state){
 	DrawGrid();
 	SDL_SetRenderTarget(renderer, NULL); // Stops rendering the grid
 
-	// Essentialy this is the camera 
+	// Essentialy, this is the camera 
 	gridTargetRect.x = textureWidth/2 - gridTargetRect.w/2;
 }
 
@@ -155,13 +157,31 @@ static void _OnChangeGridSize(const char *newVal){
 	printf("update grid size to: %s \n", newVal);
 }
 
+static void _OnLoadTileset(const char *newVal){
+	printf("Load %s\n",newVal);
+
+	nfdchar_t *outPath = NULL;
+	nfdchar_t *filter  = "png,jpeg,gif";
+	nfdresult_t result = NFD_OpenDialog(filter, NULL, &outPath);
+
+	if(result == NFD_OKAY){
+		printf("opened: %s \n", outPath);
+		free(outPath);
+	}else if(result == NFD_CANCEL){
+		printf("cancelled\n");
+	}else{
+		printf("Error: %s\n", NFD_GetError());
+	}
+                                    
+                                    
+}
+
 static void _OnButtonBack(){
 	nextState = MENU;
 }
 
-
 static void _OnButtonLoadTileset(){
-	ShowContextMenu(100, 48, 200, 200, directories, _OnChangeGridSize, TOP_LEFT);
+	ShowContextMenu(100, 48, 200, 200, directories, _OnLoadTileset, TOP_LEFT);
 }
 
 static void _OnButtonGridSize(){
