@@ -16,6 +16,7 @@ const char *gridValues[] = {
 const char *directories[] = {
 	"Load Walls",
 	"Load floors",
+	"Load Misc.",
 	NULL
 };
 
@@ -38,6 +39,7 @@ static void _OnButtonBack();
 static void _OnButtonGridSize();
 static void _OnButtonLoadTileset();
 static void _OnChangeGridSize(const char *newVal);
+static bool IsMouseBeingDragged(float *mouseXMotion, float *mouseYMotion);
 
 void ExitLevel();
 editor_state_id UpdateLevel(SDL_Renderer *renderer);
@@ -77,29 +79,27 @@ void InitLevel(editor_state *state){
 }
 
 editor_state_id UpdateLevel(SDL_Renderer *renderer){
-	SDL_Event *event = GetInputEvents();
-	for(; event->type != 0; ++event){
-		switch(event->type){
-			case SDL_EVENT_KEY_DOWN :{
-				SDL_FRect cpyTemp = gridTargetRect;
-				gridTargetRect.y += ((event->key.key == SDLK_K) - (event->key.key == SDLK_J)) * CAMERA_SPEED * 16/1000;
-				gridTargetRect.x += ((event->key.key == SDLK_L) - (event->key.key == SDLK_H)) * CAMERA_SPEED * 16/1000;
-				
-				if(gridTargetRect.x+gridTargetRect.w >= textureWidth || gridTargetRect.x < 0) gridTargetRect.x = cpyTemp.x;
-				if(gridTargetRect.y+gridTargetRect.y >= textureHeight || gridTargetRect.y < 0) gridTargetRect.y = cpyTemp.y;
-				break;
-			}
+	// Camera moving
+	const bool *kstate = SDL_GetKeyboardState(NULL);
+	SDL_FRect cpyTemp = gridTargetRect;
+	gridTargetRect.y += (kstate[SDL_SCANCODE_S] - kstate[SDL_SCANCODE_W]) * CAMERA_SPEED * 16/1000;
+	gridTargetRect.x += (kstate[SDL_SCANCODE_D] - kstate[SDL_SCANCODE_A]) * CAMERA_SPEED * 16/1000;
 
-		}
+	float mouseXMotion, mouseYMotion;
+	if(IsMouseBeingDragged(&mouseXMotion, &mouseYMotion)){
 
+		gridTargetRect.x += -mouseXMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
+		gridTargetRect.y += -mouseYMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
 	}
 
+	if(gridTargetRect.x+gridTargetRect.w >= textureWidth || gridTargetRect.x < 0) gridTargetRect.x = cpyTemp.x;
+	if(gridTargetRect.y+gridTargetRect.y >= textureHeight || gridTargetRect.y < 0) gridTargetRect.y = cpyTemp.y;
+	
 	// Screen margins
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderRect(renderer, &gridScreenRect);
 	
 	SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
-
 
 	UpdateGuiElements();
 	return nextState;
@@ -114,8 +114,6 @@ static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h){
 }
 
 static void DrawGrid(){
-	//DrawTile(textureWidth/2 - tileWidth/2, tileHeight, 128, 64);
-	
 	uint16_t tileStartX = textureWidth/2 - tileWidth/2;
 	uint16_t tileStartY = tileHeight;
 	for(uint16_t x = 0; x < gridWidth; ++x){
@@ -127,6 +125,30 @@ static void DrawGrid(){
 		}
 		
 	}
+}
+
+// TODO: maybe move this somewhere else?
+static bool IsMouseBeingDragged(float *mouseXMotion, float *mouseYMotion){
+	bool isMouseMoving, isDragBtnPressed;
+	isMouseMoving = isDragBtnPressed = false;
+	SDL_Event *event = GetInputEvents();
+
+	for(; event->type != 0; ++event){
+		switch(event->type){
+			case SDL_EVENT_MOUSE_MOTION :{
+				*mouseXMotion = event->motion.xrel;
+				*mouseYMotion = event->motion.yrel;
+				isMouseMoving = true;
+				break;
+			}
+		}
+	}
+	
+	if(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_MIDDLE){
+		isDragBtnPressed = true;
+	}
+	
+	return isMouseMoving && isDragBtnPressed;
 }
 
 static void _OnChangeGridSize(const char *newVal){

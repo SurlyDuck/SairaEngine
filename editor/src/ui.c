@@ -295,7 +295,7 @@ void UpdateGuiElements(){
 				for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
 					if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
 
-					if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
+					if(IsPointOverlayingRect(event->motion.x, event->motion.y, allButtons.items[i].rect)){
 						allButtons.items[i].state = BUTTON_HOVERED;
 						alreadyHovering = true;
 					}else allButtons.items[i].state = BUTTON_IDLE;
@@ -303,11 +303,11 @@ void UpdateGuiElements(){
 				
 				if(currentContextMenu.active){  // Context menu
 					float itemHeight = TTF_GetFontSize(monoRegularSmall); // Values in the list use this font
-					if(IsPointOverlayingRect(event->button.x, event->button.y, currentContextMenu.rect)){
+					if(IsPointOverlayingRect(event->motion.x, event->motion.y, currentContextMenu.rect)){
 						for(int i = 0; currentContextMenu.values[i] != NULL; ++i){
 							float itemTop = currentContextMenu.rect.y + i * MENULIST_PADDING;
 							
-							if(event->button.y >= itemTop && event->button.y <= itemTop + itemHeight){
+							if(event->motion.y >= itemTop && event->motion.y <= itemTop + itemHeight){
 								currentContextMenu.selected = i;
 								break;
 							}
