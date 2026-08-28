@@ -21,6 +21,36 @@ const char *directories[] = {
 	NULL
 };
 
+typedef enum tile_type{
+	WALL = 0,
+	FLOOR,
+	MISC
+}tile_type;
+
+typedef struct tile{
+	SDL_Texture *texture;
+	tile_type type;
+	uint16_t x;
+	uint16_t y;
+	uint8_t layer;
+}tile;
+
+typedef struct tiles{
+	tile  *items;
+	size_t count;
+	size_t capacity;
+}tiles;
+
+typedef struct tileset{
+	bool enabled;
+	SDL_Texture *texture;
+	tile_type type;
+	uint8_t gridWidth;
+	uint8_t gridHeight;
+}tileset;
+
+
+
 // Locals
 editor_state_id nextState;
 static uint16_t gridWidth      = 16; // Maybe move grid variables into a `world` structure?
@@ -32,10 +62,15 @@ static uint16_t textureHeight;
 static SDL_Texture *gridTargetTexture  = NULL;
 static SDL_FRect gridScreenRect = {0};
 static SDL_FRect gridTargetRect = {0};
+static tiles wallArray          = {0};
+static tiles floorArray         = {0};
+static tiles miscArray          = {0};
+static tileset newTileSet       = {0};
 
 // Local foward declarations
 static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h);
 static void DrawGrid();
+static void ShowTileSelector();
 static void _OnButtonBack();
 static void _OnButtonGridSize();
 static void _OnButtonLoadTileset();
@@ -96,12 +131,16 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 
 	if(gridTargetRect.x+gridTargetRect.w >= textureWidth || gridTargetRect.x < 0) gridTargetRect.x = cpyTemp.x;
 	if(gridTargetRect.y+gridTargetRect.y >= textureHeight || gridTargetRect.y < 0) gridTargetRect.y = cpyTemp.y;
-	
+
 	// Screen margins
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderRect(renderer, &gridScreenRect);
 	
 	SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
+
+	if(newTileSet.enabled){ 
+		ShowTileSelector();
+	}
 
 	UpdateGuiElements();
 	return nextState;
@@ -128,6 +167,33 @@ static void DrawGrid(){
 		
 	}
 }
+
+static void ShowTileSelector(){
+	SDL_FRect background = {.x = WINDOW_WIDTH/2-400, .y = WINDOW_HEIGHT/2-300, .w = 800, .h = 600};
+	SDL_FRect outline = {.x = WINDOW_WIDTH/2-400, .y = WINDOW_HEIGHT/2-300, .w = 800, .h = 600};
+	SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, 0xFF);
+	SDL_RenderFillRect(renderer, &background);
+	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	SDL_RenderRect(renderer, &outline);
+}
+
+static void InitNewTileset(const char *path, tile_type type){
+	// Initialize new tile set for use in the tile selector subroutine
+	SDL_Texture *tilesetTex = NULL;
+	if((tilesetTex = IMG_LoadTexture(renderer, path)) == NULL){
+		// TODO: dialog box
+		printf("Couldn't load tileset texture\n");
+		return;
+	}
+	
+	newTileSet = (tileset){
+		.enabled = true,
+		.texture = tilesetTex,
+		.type = type,
+		.gridWidth = 128,
+		.gridHeight = 128,
+	};
+} 
 
 // TODO: maybe move this somewhere else?
 static bool IsMouseBeingDragged(float *mouseXMotion, float *mouseYMotion){
@@ -165,14 +231,18 @@ static void _OnLoadTileset(const char *newVal){
 	nfdresult_t result = NFD_OpenDialog(filter, NULL, &outPath);
 
 	if(result == NFD_OKAY){
-		printf("opened: %s \n", outPath);
+		if(strcmp(newVal, "Walls") == 0){
+			InitNewTileset((const char*)outPath, WALL);
+		}else if(strcmp(newVal, "Floors") == 0){
+			InitNewTileset((const char*)outPath, FLOOR);
+		}else{
+			InitNewTileset((const char*)outPath, MISC);
+		}
 		free(outPath);
-	}else if(result == NFD_CANCEL){
-		printf("cancelled\n");
-	}else{
+	}else if(result == NFD_ERROR){	
+		// TODO: dialog box
 		printf("Error: %s\n", NFD_GetError());
 	}
-                                    
                                     
 }
 

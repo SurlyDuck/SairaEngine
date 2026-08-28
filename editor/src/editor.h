@@ -115,8 +115,6 @@ extern void InitLevel(editor_state *state);
 
 //------------------------------------------------------------------------------------
 // gui elements
-// TODO: is better to let ui.c handle each dynamic array of gui elements.
-// TODO: move every draw and update call to a UpdateGuiElements() inside ui.c.
 //------------------------------------------------------------------------------------
 typedef enum{
 	TOP_LEFT = 0,
@@ -130,6 +128,13 @@ typedef enum{
 	BOTTOM_RIGHT,
 }origin;
 
+typedef struct CONTAINER CONTAINER;
+
+extern CONTAINER *InitContainer();
+extern void UpdateContainer(CONTAINER *container);
+extern void DestroyContainer(CONTAINER *container);
+extern void AddStdButtonToContainer(CONTAINER *container);
+extern void AddLabelButtonToContainer(CONTAINER *container);
 extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
 extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)());
 extern void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);

@@ -32,6 +32,7 @@ typedef struct{
 	size_t capacity;
 }labels;
 
+
 // A window containing a list of values the user can select
 // The selected value is given on callback
 // Only one at each time
@@ -44,6 +45,21 @@ typedef struct context_menu{
 	origin anchor;
 	void (*Callback)(const char *val);
 }context_menu;
+
+// A slice of the gui
+// Stored by the caller using a pointer 
+// to this opaque structure
+// Must be updated manually
+struct CONTAINER{
+	uint16_t x;
+	uint16_t y;
+	uint16_t w;
+	uint16_t h;
+	buttons allButtons;
+	labels allLabels;
+	context_menu currentContextMenu;
+	origin anchor;
+};
 
 // Locals
 static struct context_menu currentContextMenu = {0};
