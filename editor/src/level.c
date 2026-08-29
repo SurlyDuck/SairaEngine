@@ -1,5 +1,4 @@
 #include "editor.h"
-#include "./nfd/nfd.h"
 
 #define CAMERA_SPEED 900
 
@@ -48,8 +47,6 @@ typedef struct tileset{
 	uint8_t gridWidth;
 	uint8_t gridHeight;
 }tileset;
-
-
 
 // Locals
 editor_state_id nextState;
@@ -141,7 +138,7 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 	if(newTileSet.enabled){ 
 		ShowTileSelector();
 	}
-
+	
 	UpdateGuiElements();
 	return nextState;
 }
@@ -182,7 +179,7 @@ static void InitNewTileset(const char *path, tile_type type){
 	SDL_Texture *tilesetTex = NULL;
 	if((tilesetTex = IMG_LoadTexture(renderer, path)) == NULL){
 		// TODO: dialog box
-		printf("Couldn't load tileset texture\n");
+		printf("Couldn't load tileset texture: %s", path);
 		return;
 	}
 	
@@ -224,25 +221,24 @@ static void _OnChangeGridSize(const char *newVal){
 }
 
 static void _OnLoadTileset(const char *newVal){
-	printf("Load %s\n",newVal);
+	const char *args[] = { "zenity", "--file-selection", NULL };
+	SDL_Process *zenity = SDL_CreateProcess(args, true);
 
-	nfdchar_t *outPath = NULL;
-	nfdchar_t *filter  = "png,jpeg,gif";
-	nfdresult_t result = NFD_OpenDialog(filter, NULL, &outPath);
+	const char *res = SDL_ReadProcess(zenity, NULL, NULL);
+	char buffer[256] = {0};
+	
+	// remove `\n` zenity appends to the end of the string
+   strncpy(buffer, res, strcspn(res, "\n"));
 
-	if(result == NFD_OKAY){
-		if(strcmp(newVal, "Walls") == 0){
-			InitNewTileset((const char*)outPath, WALL);
-		}else if(strcmp(newVal, "Floors") == 0){
-			InitNewTileset((const char*)outPath, FLOOR);
-		}else{
-			InitNewTileset((const char*)outPath, MISC);
-		}
-		free(outPath);
-	}else if(result == NFD_ERROR){	
-		// TODO: dialog box
-		printf("Error: %s\n", NFD_GetError());
+	if(strcmp(newVal, "Walls") == 0){
+		InitNewTileset(buffer, WALL);
+	}else if(strcmp(newVal, "Floors") == 0){
+		InitNewTileset(buffer, FLOOR);
+	}else{
+		InitNewTileset(buffer, MISC);
 	}
+
+	SDL_free(res);
                                     
 }
 

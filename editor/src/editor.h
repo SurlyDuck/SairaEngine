@@ -22,7 +22,7 @@
 #define _EDITOR_H
 
 #ifndef WIN_32
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
 #endif
 
 #define VERSION "0.0.1"
@@ -30,12 +30,16 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <assert.h>
 #include <unistd.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_process.h>
+
 #define WINDOW_WIDTH  1360
 #define WINDOW_HEIGHT  730
 
