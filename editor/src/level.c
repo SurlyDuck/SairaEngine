@@ -63,11 +63,11 @@ static tiles wallArray          = {0};
 static tiles floorArray         = {0};
 static tiles miscArray          = {0};
 static tileset newTileSet       = {0};
+static CONTAINER *tilesetSelectorContainer = NULL;
 
 // Local foward declarations
 static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h);
 static void DrawGrid();
-static void ShowTileSelector();
 static void _OnButtonBack();
 static void _OnButtonGridSize();
 static void _OnButtonLoadTileset();
@@ -135,11 +135,13 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 	
 	SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
 
+	UpdateGuiElements();
+
 	if(newTileSet.enabled){ 
-		ShowTileSelector();
+		//ShowTileSelector();
+		UpdateContainerElements(tilesetSelectorContainer);	
 	}
 	
-	UpdateGuiElements();
 	return nextState;
 }
 
@@ -165,13 +167,9 @@ static void DrawGrid(){
 	}
 }
 
-static void ShowTileSelector(){
-	SDL_FRect background = {.x = WINDOW_WIDTH/2-400, .y = WINDOW_HEIGHT/2-300, .w = 800, .h = 600};
-	SDL_FRect outline = {.x = WINDOW_WIDTH/2-400, .y = WINDOW_HEIGHT/2-300, .w = 800, .h = 600};
-	SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, 0xFF);
-	SDL_RenderFillRect(renderer, &background);
-	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-	SDL_RenderRect(renderer, &outline);
+void _OnButtonContainerTest(){
+	printf("Button from the container \n");
+
 }
 
 static void InitNewTileset(const char *path, tile_type type){
@@ -190,6 +188,9 @@ static void InitNewTileset(const char *path, tile_type type){
 		.gridWidth = 128,
 		.gridHeight = 128,
 	};
+
+	tilesetSelectorContainer = InitContainer(200, 200, 100, 100);
+	AddStdButtonContainer(0, 0, 100, 40, "TEST", monoRegularMedium, _OnButtonContainerTest, tilesetSelectorContainer);
 } 
 
 // TODO: maybe move this somewhere else?
@@ -238,8 +239,7 @@ static void _OnLoadTileset(const char *newVal){
 		InitNewTileset(buffer, MISC);
 	}
 
-	SDL_free(res);
-                                    
+	SDL_free((void*)res);
 }
 
 static void _OnButtonBack(){

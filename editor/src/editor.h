@@ -118,7 +118,7 @@ extern void InitLevel(editor_state *state);
 
 
 //------------------------------------------------------------------------------------
-// gui elements
+// Gui elements
 //------------------------------------------------------------------------------------
 typedef enum{
 	TOP_LEFT = 0,
@@ -134,11 +134,10 @@ typedef enum{
 
 typedef struct CONTAINER CONTAINER;
 
-extern CONTAINER *InitContainer();
-extern void UpdateContainer(CONTAINER *container);
+extern CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+extern void UpdateContainerElements(CONTAINER *container);
+extern void AddStdButtonContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container);
 extern void DestroyContainer(CONTAINER *container);
-extern void AddStdButtonToContainer(CONTAINER *container);
-extern void AddLabelButtonToContainer(CONTAINER *container);
 extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
 extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)());
 extern void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or);

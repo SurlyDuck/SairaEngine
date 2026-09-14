@@ -32,7 +32,6 @@ typedef struct{
 	size_t capacity;
 }labels;
 
-
 // A window containing a list of values the user can select
 // The selected value is given on callback
 // Only one at each time
@@ -65,6 +64,12 @@ struct CONTAINER{
 static struct context_menu currentContextMenu = {0};
 static buttons allButtons = {0};
 static labels  allLabels  = {0};
+// Set by container functions when
+// operations are supposed to be
+// done within containers.
+// NULL means the rendering is done
+// straight into the window
+static CONTAINER *currentGuiContainer = NULL;
 
 // TODO: the rest of the anchors
 void AlignRect(SDL_FRect *rect, origin or){
@@ -162,8 +167,15 @@ void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *te
 		.pressedTexture = pressedTexture,
 		.state = BUTTON_IDLE,
 		.CallBack = Callback};
-
-	DA_APPEND(newBtn, (&allButtons));
+	
+	if(currentGuiContainer == NULL)
+		DA_APPEND(newBtn, (&allButtons));
+	else{
+		newBtn.rect.x += currentGuiContainer->x;
+		newBtn.rect.y += currentGuiContainer->y;
+		DA_APPEND(newBtn, (&((*currentGuiContainer).allButtons)));
+		currentGuiContainer = NULL;
+	}
 	
 }
 
@@ -200,7 +212,7 @@ void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char 
 }
 
 // TODO: a bit of repetition; maybe a macro can replace all drawing subroutines
-static void DrawAllButtons(){
+static void DrawAllButtons(buttons allButtons){
 	for(size_t i = 0; i < allButtons.count; ++i){
 		SDL_Texture *btnTexture; //= buttonsArray->items[i].idleTexture;
 		switch(allButtons.items[i].state){
@@ -268,9 +280,21 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 
 
 void UpdateGuiElements(){
+	buttons buttonArray = allButtons;
+	labels  labelArray  = allLabels;
+	
+	if(currentGuiContainer != NULL){
+		buttonArray = currentGuiContainer->allButtons;
+		labelArray  = currentGuiContainer->allLabels;
+
+		// Container is consumed
+		// UpdateContainerElements() must be called to use it again
+		currentGuiContainer = NULL;
+	}
+	
 	// Drawing subroutines
-	DrawAllButtons();
-	DrawAllLabels();
+	DrawAllButtons(buttonArray);
+	DrawAllLabels(labelArray);
 	DrawContextMenu();
 
 	SDL_Event *event = GetInputEvents();
@@ -278,9 +302,9 @@ void UpdateGuiElements(){
 		switch(event->type){
 			case SDL_EVENT_MOUSE_BUTTON_DOWN :{
 				if(event->button.button == SDL_BUTTON_LEFT){
-					for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
-						if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
-							allButtons.items[i].state = BUTTON_PRESSED;
+					for(size_t i = 0; i < buttonArray.count; ++i){ // Buttons
+						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonArray.items[i].rect)){
+							buttonArray.items[i].state = BUTTON_PRESSED;
 							break;
 						}
 					}
@@ -296,10 +320,10 @@ void UpdateGuiElements(){
 			}
 			case SDL_EVENT_MOUSE_BUTTON_UP :{
 				if(event->button.button == SDL_BUTTON_LEFT){
-					for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
-						if(IsPointOverlayingRect(event->button.x, event->button.y, allButtons.items[i].rect)){
-							allButtons.items[i].state = BUTTON_HOVERED;
-							allButtons.items[i].CallBack();
+					for(size_t i = 0; i < buttonArray.count; ++i){ // Buttons
+						if(IsPointOverlayingRect(event->button.x, event->button.y, buttonArray.items[i].rect)){
+							buttonArray.items[i].state = BUTTON_HOVERED;
+							buttonArray.items[i].CallBack();
 							break;
 						}
 					}
@@ -308,13 +332,13 @@ void UpdateGuiElements(){
 			}
 			case SDL_EVENT_MOUSE_MOTION: {
 				bool alreadyHovering = false;
-				for(size_t i = 0; i < allButtons.count; ++i){ // Buttons
-					if(alreadyHovering) {allButtons.items[i].state = BUTTON_IDLE; continue;}
+				for(size_t i = 0; i < buttonArray.count; ++i){ // Buttons
+					if(alreadyHovering) {buttonArray.items[i].state = BUTTON_IDLE; continue;}
 
-					if(IsPointOverlayingRect(event->motion.x, event->motion.y, allButtons.items[i].rect)){
-						allButtons.items[i].state = BUTTON_HOVERED;
+					if(IsPointOverlayingRect(event->motion.x, event->motion.y, buttonArray.items[i].rect)){
+						buttonArray.items[i].state = BUTTON_HOVERED;
 						alreadyHovering = true;
-					}else allButtons.items[i].state = BUTTON_IDLE;
+					}else buttonArray.items[i].state = BUTTON_IDLE;
 				}
 				
 				if(currentContextMenu.active){  // Context menu
@@ -336,6 +360,33 @@ void UpdateGuiElements(){
 		}
 	}
 
+}
+
+CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	CONTAINER *newContainer = (CONTAINER*) malloc(sizeof(CONTAINER));
+	newContainer->x = x;
+	newContainer->y = y;
+	newContainer->w = w;
+	newContainer->h = h;	
+	newContainer->allButtons = (buttons){0};
+
+	return newContainer;
+}
+
+
+void UpdateContainerElements(CONTAINER *container){
+	currentGuiContainer = container;
+
+	
+	
+	UpdateGuiElements();
+}
+
+
+void AddStdButtonContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container){
+	currentGuiContainer = container;
+	AddStdButton(x, y, w, h, text, font, Callback);
+	
 }
 
 bool IsGuiBusy(){
