@@ -50,10 +50,7 @@ typedef struct context_menu{
 // to this opaque structure
 // Must be updated manually
 struct CONTAINER{
-	uint16_t x;
-	uint16_t y;
-	uint16_t w;
-	uint16_t h;
+	SDL_FRect rect;
 	buttons allButtons;
 	labels allLabels;
 	context_menu currentContextMenu;
@@ -64,12 +61,6 @@ struct CONTAINER{
 static struct context_menu currentContextMenu = {0};
 static buttons allButtons = {0};
 static labels  allLabels  = {0};
-// Set by container functions when
-// operations are supposed to be
-// done within containers.
-// NULL means the rendering is done
-// straight into the window
-static CONTAINER *currentGuiContainer = NULL;
 
 // TODO: the rest of the anchors
 void AlignRect(SDL_FRect *rect, origin or){
@@ -119,7 +110,7 @@ void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleT
 #define BTN_STANDARD_BG_COLOR 0, 255, 0, SDL_ALPHA_OPAQUE
 #define BTN_STANDARD_FG_COLOR 0, 0, 255, SDL_ALPHA_OPAQUE
 
-void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)()){
+void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container){
 	SDL_Texture *idleTexture, *hoverTexture, *pressedTexture, *fontTexture;
 	SDL_FRect btnRect = {.x = x, .y = y, .w = w, .h = h };
 
@@ -168,18 +159,17 @@ void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *te
 		.state = BUTTON_IDLE,
 		.CallBack = Callback};
 	
-	if(currentGuiContainer == NULL)
+	if(container== NULL)
 		DA_APPEND(newBtn, (&allButtons));
 	else{
-		newBtn.rect.x += currentGuiContainer->x;
-		newBtn.rect.y += currentGuiContainer->y;
-		DA_APPEND(newBtn, (&((*currentGuiContainer).allButtons)));
-		currentGuiContainer = NULL;
+		newBtn.rect.x += container->rect.x;
+		newBtn.rect.y += container->rect.y;
+		DA_APPEND(newBtn, (&((*container).allButtons)));
 	}
 	
 }
 
-void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or){
+void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or, CONTAINER *container){
 	SDL_Surface *sur = TTF_RenderText_Blended(font, text, 0, color);
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
 	SDL_DestroySurface(sur);
@@ -235,35 +225,35 @@ void DrawAllLabels(){
 	}
 }
 
-#define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
-#define MENULIST_FG_COLOR 0, 0, 255,   SDL_ALPHA_OPAQUE
-#define MENULIST_SL_COLOR 155, 155, 155, SDL_ALPHA_OPAQUE
-#define MENULIST_PADDING 20 + 4
-void DrawContextMenu(){
-	if(currentContextMenu.active){
-		SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
-		SDL_RenderFillRect(renderer, &currentContextMenu.rect);
+	#define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
+	#define MENULIST_FG_COLOR 0, 0, 255,   SDL_ALPHA_OPAQUE
+	#define MENULIST_SL_COLOR 155, 155, 155, SDL_ALPHA_OPAQUE
+	#define MENULIST_PADDING 20 + 4
+	void DrawContextMenu(){
+		if(currentContextMenu.active){
+			SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
+			SDL_RenderFillRect(renderer, &currentContextMenu.rect);
 
-		SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
-		SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y, currentContextMenu.rect.w-4, currentContextMenu.rect.h-4});
-	
-		int i = 0;
-		while(currentContextMenu.values[i] != NULL){ // Very dangerous
-			SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentContextMenu.values[i], 0, WHITE);
-			SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
-			SDL_DestroySurface(sur);
-
-			if(currentContextMenu.selected == i){
-				SDL_SetRenderDrawColor(renderer, MENULIST_SL_COLOR);
-				SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y + i *MENULIST_PADDING, currentContextMenu.rect.w, 15});
-			}
+			SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
+			SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y, currentContextMenu.rect.w-4, currentContextMenu.rect.h-4});
 		
-			SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentContextMenu.rect.x + currentContextMenu.rect.w/2 - tex->w/2, currentContextMenu.rect.y + i* MENULIST_PADDING, tex->w, tex->h});
-			SDL_DestroyTexture(tex);
-			i++;
-		}		
+			int i = 0;
+			while(currentContextMenu.values[i] != NULL){ // Very dangerous
+				SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentContextMenu.values[i], 0, WHITE);
+				SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
+				SDL_DestroySurface(sur);
+
+				if(currentContextMenu.selected == i){
+					SDL_SetRenderDrawColor(renderer, MENULIST_SL_COLOR);
+					SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y + i *MENULIST_PADDING, currentContextMenu.rect.w, 15});
+				}
+			
+				SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentContextMenu.rect.x + currentContextMenu.rect.w/2 - tex->w/2, currentContextMenu.rect.y + i* MENULIST_PADDING, tex->w, tex->h});
+				SDL_DestroyTexture(tex);
+				i++;
+			}		
+		}
 	}
-}
 
 bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 	int centerX = rect.x + rect.w/2;
@@ -279,17 +269,19 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 }
 
 
-void UpdateGuiElements(){
+void UpdateGuiElements(CONTAINER *container){
 	buttons buttonArray = allButtons;
 	labels  labelArray  = allLabels;
 	
-	if(currentGuiContainer != NULL){
-		buttonArray = currentGuiContainer->allButtons;
-		labelArray  = currentGuiContainer->allLabels;
-
-		// Container is consumed
-		// UpdateContainerElements() must be called to use it again
-		currentGuiContainer = NULL;
+	if(container != NULL){
+		buttonArray = container->allButtons;
+		labelArray  = container->allLabels;
+		
+		// Container standard window
+		SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, 0xFF);
+		SDL_RenderFillRect(renderer, &container->rect);
+		SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+		SDL_RenderRect(renderer, &container->rect);
 	}
 	
 	// Drawing subroutines
@@ -362,31 +354,14 @@ void UpdateGuiElements(){
 
 }
 
-CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, origin or){
+	// TODO: allign according to anchor
 	CONTAINER *newContainer = (CONTAINER*) malloc(sizeof(CONTAINER));
-	newContainer->x = x;
-	newContainer->y = y;
-	newContainer->w = w;
-	newContainer->h = h;	
+	SDL_FRect containerRect = {.x = x, .y = y, .w = w, .h = h};
 	newContainer->allButtons = (buttons){0};
+	newContainer->rect = containerRect;
 
 	return newContainer;
-}
-
-
-void UpdateContainerElements(CONTAINER *container){
-	currentGuiContainer = container;
-
-	
-	
-	UpdateGuiElements();
-}
-
-
-void AddStdButtonContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container){
-	currentGuiContainer = container;
-	AddStdButton(x, y, w, h, text, font, Callback);
-	
 }
 
 bool IsGuiBusy(){

@@ -50,20 +50,20 @@ typedef struct tileset{
 
 // Locals
 editor_state_id nextState;
+static uint16_t textureWidth;
+static uint16_t textureHeight;
 static uint16_t gridWidth      = 16; // Maybe move grid variables into a `world` structure?
 static uint16_t gridHeight     = 16;
 static uint16_t tileWidth      = 128;
 static uint16_t tileHeight     = 64; 
-static uint16_t textureWidth;
-static uint16_t textureHeight;
 static SDL_Texture *gridTargetTexture  = NULL;
-static SDL_FRect gridScreenRect = {0};
-static SDL_FRect gridTargetRect = {0};
-static tiles wallArray          = {0};
-static tiles floorArray         = {0};
-static tiles miscArray          = {0};
-static tileset newTileSet       = {0};
-static CONTAINER *tilesetSelectorContainer = NULL;
+static SDL_FRect gridScreenRect        = {0};
+static SDL_FRect gridTargetRect        = {0};
+static tiles wallArray                 = {0};
+static tiles floorArray                = {0};
+static tiles miscArray                 = {0};
+static tileset newTileSet              = {0};
+static CONTAINER *selectContainer      = NULL;
 
 // Local foward declarations
 static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h);
@@ -84,11 +84,11 @@ void InitLevel(editor_state *state){
 	state->id      = LEVEL;
 	nextState      = LEVEL;
 		
-	AddStdButton(0, 0, 30, 40, "<<", monoRegularMedium, _OnButtonBack);
-	AddStdButton(100, 0, 92, 40, "TILESET", monoRegularMedium, _OnButtonLoadTileset);
-	AddStdButton(200, 0, 92, 40, "MAP", monoRegularMedium, _OnButtonBack);
-	AddStdButton(300, 0, 92, 40, "OUT", monoRegularMedium, _OnButtonBack);
-	AddStdButton(400, 0, 92, 40, "SIZE", monoRegularMedium, _OnButtonGridSize);
+	AddStdButton(0, 0, 30, 40, "<<", monoRegularMedium, _OnButtonBack, NULL);
+	AddStdButton(100, 0, 92, 40, "TILESET", monoRegularMedium, _OnButtonLoadTileset, NULL);
+	AddStdButton(200, 0, 92, 40, "MAP", monoRegularMedium, _OnButtonBack, NULL);
+	AddStdButton(300, 0, 92, 40, "OUT", monoRegularMedium, _OnButtonBack, NULL);
+	AddStdButton(400, 0, 92, 40, "SIZE", monoRegularMedium, _OnButtonGridSize, NULL);
 	
 	gridTargetRect.w = WINDOW_WIDTH;
 	gridTargetRect.h = WINDOW_HEIGHT - 200;
@@ -135,11 +135,11 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 	
 	SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
 
-	UpdateGuiElements();
+	UpdateGuiElements(NULL);
 
 	if(newTileSet.enabled){ 
 		//ShowTileSelector();
-		UpdateContainerElements(tilesetSelectorContainer);	
+		UpdateGuiElements(selectContainer);	
 	}
 	
 	return nextState;
@@ -167,9 +167,8 @@ static void DrawGrid(){
 	}
 }
 
-void _OnButtonContainerTest(){
-	printf("Button from the container \n");
-
+void _OnButtonSelectorCancel(){
+	DestroyContainer(container);
 }
 
 static void InitNewTileset(const char *path, tile_type type){
@@ -188,9 +187,10 @@ static void InitNewTileset(const char *path, tile_type type){
 		.gridWidth = 128,
 		.gridHeight = 128,
 	};
-
-	tilesetSelectorContainer = InitContainer(200, 200, 100, 100);
-	AddStdButtonContainer(0, 0, 100, 40, "TEST", monoRegularMedium, _OnButtonContainerTest, tilesetSelectorContainer);
+	
+	// GUI container
+	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
+	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?

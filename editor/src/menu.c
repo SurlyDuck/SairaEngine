@@ -24,9 +24,9 @@ void InitMenu(editor_state *state){
 	"./assets/clockHover.png", "./assets/clockPressed.png", _OnTimelineClick);
 	
 	// Labels
-	AddLabel("not centered", WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0);
-	AddLabel("centered", WINDOW_WIDTH/2, 40, monoRegularLarge, WHITE, MIDDLE_CENTER);
-	AddLabel(VERSION RELEASE, WINDOW_WIDTH, WINDOW_HEIGHT, monoRegularSmall, WHITE, BOTTOM_RIGHT);
+	AddLabel("not centered", WINDOW_WIDTH/2, 0, monoRegularLarge, WHITE, 0, NULL);
+	AddLabel("centered", WINDOW_WIDTH/2, 40, monoRegularLarge, WHITE, MIDDLE_CENTER, NULL);
+	AddLabel(VERSION RELEASE, WINDOW_WIDTH, WINDOW_HEIGHT, monoRegularSmall, WHITE, BOTTOM_RIGHT, NULL);
 
 }
 
@@ -41,7 +41,7 @@ editor_state_id UpdateMenu(SDL_Renderer *renderer){
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 	SDL_RenderRect(renderer, &r);
 	
-	UpdateGuiElements();
+	UpdateGuiElements(NULL);
 
 	return nextState;
 }
