@@ -140,7 +140,7 @@ extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char
 extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container);
 extern void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or, CONTAINER *container);
 extern void UpdateGuiElements(CONTAINER *container);
-extern void DestroyGuiElements();
+extern void DestroyGuiElements(CONTAINER *container);
 extern void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or);
 extern bool IsGuiBusy();
 

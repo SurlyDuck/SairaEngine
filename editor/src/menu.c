@@ -61,6 +61,6 @@ static void _OnTimelineClick(){
 
 void ExitMenu(){
 	printf("exiting menu... \n");
-	DestroyGuiElements();
+	DestroyGuiElements(NULL);
 }
 

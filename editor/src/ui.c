@@ -46,8 +46,7 @@ typedef struct context_menu{
 }context_menu;
 
 // A slice of the gui
-// Stored by the caller using a pointer 
-// to this opaque structure
+// Handled as an opaque structure
 // Must be updated manually
 struct CONTAINER{
 	SDL_FRect rect;
@@ -354,35 +353,60 @@ void UpdateGuiElements(CONTAINER *container){
 
 }
 
+bool IsGuiBusy(){
+	return currentContextMenu.active;
+}
+
 CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, origin or){
 	// TODO: allign according to anchor
 	CONTAINER *newContainer = (CONTAINER*) malloc(sizeof(CONTAINER));
 	SDL_FRect containerRect = {.x = x, .y = y, .w = w, .h = h};
-	newContainer->allButtons = (buttons){0};
+	memset(newContainer, 0, sizeof(CONTAINER));
+
 	newContainer->rect = containerRect;
 
 	return newContainer;
 }
 
-bool IsGuiBusy(){
-	return currentContextMenu.active;
+void DestroyContainer(CONTAINER *container){
+	assert(container != NULL && "Trying to free a null container");
+	DestroyGuiElements(container);
 }
 
-void DestroyGuiElements(){
-	// Buttons
-	for(size_t i = 0; i < allButtons.count; ++i){
-		SDL_DestroyTexture(allButtons.items[i].idleTexture);
-		SDL_DestroyTexture(allButtons.items[i].hoverTexture);
-		SDL_DestroyTexture(allButtons.items[i].pressedTexture);
-	}
-	DA_CLEAR((&allButtons));
+static void DestroyButtons(buttons *buttonArray){
+	if(buttonArray->items == NULL) return;
 
-	// Labels
-	for(size_t i = 0; i < allLabels.count; ++i){
-		SDL_DestroyTexture(allLabels.items[i].texture);
+	for(size_t i = 0; i < buttonArray->count; ++i){
+		SDL_DestroyTexture(buttonArray->items[i].idleTexture);
+		SDL_DestroyTexture(buttonArray->items[i].hoverTexture);
+		SDL_DestroyTexture(buttonArray->items[i].pressedTexture);
 	}
-	DA_CLEAR((&allLabels));
-
-	// Menu list
-	currentContextMenu.active = false;
+	DA_CLEAR(buttonArray);
 }
+
+static void DestroyLabels(labels *labelArray){
+	if(labelArray->items == NULL) return;
+
+	for(size_t i = 0; i < labelArray->count; ++i){
+		SDL_DestroyTexture(labelArray->items[i].texture);
+	}
+	DA_CLEAR(labelArray);
+}
+
+void DestroyGuiElements(CONTAINER *container){
+	buttons *buttonArray = &allButtons;
+	labels  *labelArray  = &allLabels;
+	context_menu *cmenu  = &currentContextMenu;
+
+	if(container != NULL){
+		buttonArray = &(container->allButtons);
+		labelArray  = &(container->allLabels);
+		cmenu       = &(container->currentContextMenu);
+	}
+
+	DestroyButtons(buttonArray);
+	DestroyLabels(labelArray);
+
+	cmenu->active = false;
+}
+

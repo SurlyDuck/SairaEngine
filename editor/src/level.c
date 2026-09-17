@@ -137,8 +137,7 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 
 	UpdateGuiElements(NULL);
 
-	if(newTileSet.enabled){ 
-		//ShowTileSelector();
+	if(selectContainer != NULL){ 
 		UpdateGuiElements(selectContainer);	
 	}
 	
@@ -168,7 +167,8 @@ static void DrawGrid(){
 }
 
 void _OnButtonSelectorCancel(){
-	DestroyContainer(container);
+	DestroyContainer(selectContainer);
+	selectContainer = NULL;
 }
 
 static void InitNewTileset(const char *path, tile_type type){
@@ -255,7 +255,7 @@ static void _OnButtonGridSize(){
 }
 
 void ExitLevel(){
-	DestroyGuiElements();
+	DestroyGuiElements(NULL);
 	SDL_DestroyTexture(gridTargetTexture);
 }
 
