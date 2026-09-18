@@ -188,6 +188,11 @@ static void InitNewTileset(const char *path, tile_type type){
 		.gridHeight = 128,
 	};
 	
+	if(selectContainer != NULL){
+		DestroyContainer(selectContainer);
+		selectContainer = NULL;
+	}
+
 	// GUI container
 	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
