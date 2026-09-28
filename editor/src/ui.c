@@ -32,10 +32,25 @@ typedef struct{
 	size_t capacity;
 }labels;
 
+typedef struct{
+	uint8_t selected;
+	uint8_t count;
+	uint8_t page;
+	uint8_t imagesPerPage;
+	bool vertical;
+	SDL_Texture *images[];
+}image_list;
+
+typedef struct{
+	image_list *items;
+	size_t count;
+	size_t capacity;
+}image_lists;
+
 // A window containing a list of values the user can select
 // The selected value is given on callback
 // Only one at each time
-// values does not point to the heap
+// values point to static memory
 typedef struct context_menu{
 	bool active;
 	const char **values;
@@ -52,6 +67,7 @@ struct CONTAINER{
 	SDL_FRect rect;
 	buttons allButtons;
 	labels allLabels;
+	image_lists allImageLists;
 	context_menu currentContextMenu;
 	origin anchor;
 };
@@ -60,6 +76,7 @@ struct CONTAINER{
 static struct context_menu currentContextMenu = {0};
 static buttons allButtons = {0};
 static labels  allLabels  = {0};
+static image_lists allImageLists = {0};
 
 // TODO: the rest of the anchors
 void AlignRect(SDL_FRect *rect, origin or){
@@ -186,6 +203,21 @@ void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Colo
 		.rect    = rect};
 
 	DA_APPEND(newLabel, (&allLabels));
+}
+
+void AddImageList(uint8_t imagesPerPage, bool vertical, SDL_Texture *textures[], CONTAINER *container){
+	image_list newList = {
+		.selected = 0,
+		.count = sizeof(*textures)/sizeof(SDL_Texture*),
+		.page = 0,
+		.imagesPerPage = imagesPerPage,
+		.vertical = vertical
+	};
+	
+	if(container == NULL)
+		DA_APPEND(newList, (&allImageLists));
+	else
+		DA_APPEND(newList, (&((*container).allImageLists)));
 }
 
 void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or){

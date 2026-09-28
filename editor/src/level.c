@@ -176,7 +176,7 @@ static void InitNewTileset(const char *path, tile_type type){
 	SDL_Texture *tilesetTex = NULL;
 	if((tilesetTex = IMG_LoadTexture(renderer, path)) == NULL){
 		// TODO: dialog box
-		printf("Couldn't load tileset texture: %s", path);
+		printf("Couldn't load tileset texture: %s\n", path);
 		return;
 	}
 	
@@ -196,6 +196,9 @@ static void InitNewTileset(const char *path, tile_type type){
 	// GUI container
 	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
+
+	// TODO: cut all SDL textures from the loaded image
+	//void AddImageList(uint8_t imagesPerPage, bool vertical, SDL_Texture *textures[], CONTAINER *container){
 } 
 
 // TODO: maybe move this somewhere else?
