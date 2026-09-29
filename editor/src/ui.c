@@ -38,7 +38,8 @@ typedef struct{
 	uint8_t page;
 	uint8_t imagesPerPage;
 	bool vertical;
-	SDL_Texture *images[];
+	SDL_Texture **images;
+	SDL_FRect posRect;
 }image_list;
 
 typedef struct{
@@ -205,31 +206,36 @@ void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Colo
 	DA_APPEND(newLabel, (&allLabels));
 }
 
-void AddImageList(uint8_t imagesPerPage, bool vertical, SDL_Texture *textures[], CONTAINER *container){
+void AddImageList(uint16_t x, uint16_t y, uint8_t imagesPerPage, size_t imagesCount, bool vertical, SDL_Texture **textures, CONTAINER *container){
 	image_list newList = {
+		.posRect = (SDL_FRect) {.x = x, .y = y, .w = 0, .h = 0},
 		.selected = 0,
 		.count = sizeof(*textures)/sizeof(SDL_Texture*),
 		.page = 0,
 		.imagesPerPage = imagesPerPage,
-		.vertical = vertical
+		.vertical = vertical,
+		.images = textures
 	};
-	
+
 	if(container == NULL)
 		DA_APPEND(newList, (&allImageLists));
-	else
+	else{
+		newList.posRect.x += container->rect.x;
+		newList.posRect.y += container->rect.y;
 		DA_APPEND(newList, (&((*container).allImageLists)));
+	}
 }
 
 void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or){
-		SDL_FRect rect = {.x = x, .y = y, .w = w, .h = h};
-		AlignRect(&rect, or);
-		currentContextMenu = (context_menu) {
-		.rect = rect,
-		.active = true,
-		.selected = 0,
-		.Callback = Callback,
-		.values = list,
-		.anchor = or};
+	SDL_FRect rect = {.x = x, .y = y, .w = w, .h = h};
+	AlignRect(&rect, or);
+	currentContextMenu = (context_menu) {
+	.rect = rect,
+	.active = true,
+	.selected = 0,
+	.Callback = Callback,
+	.values = list,
+	.anchor = or};
 }
 
 // TODO: a bit of repetition; maybe a macro can replace all drawing subroutines
@@ -248,7 +254,7 @@ static void DrawAllButtons(buttons allButtons){
 	}
 }
 
-void DrawAllLabels(){
+static void DrawAllLabels(labels allLabels){
 	for(size_t i = 0; i < allLabels.count; ++i){
 		SDL_Texture *labelTexture  = allLabels.items[i].texture;
 		SDL_FRect    labelRect     = allLabels.items[i].rect;
@@ -256,35 +262,50 @@ void DrawAllLabels(){
 	}
 }
 
-	#define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
-	#define MENULIST_FG_COLOR 0, 0, 255,   SDL_ALPHA_OPAQUE
-	#define MENULIST_SL_COLOR 155, 155, 155, SDL_ALPHA_OPAQUE
-	#define MENULIST_PADDING 20 + 4
-	void DrawContextMenu(){
-		if(currentContextMenu.active){
-			SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
-			SDL_RenderFillRect(renderer, &currentContextMenu.rect);
+#define IMAGE_OFFSET 10
+static void DrawAllImageLists(image_lists allImageLists){
+	for(size_t i = 0; i < allImageLists.count; ++i){
 
-			SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
-			SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y, currentContextMenu.rect.w-4, currentContextMenu.rect.h-4});
-		
-			int i = 0;
-			while(currentContextMenu.values[i] != NULL){ // Very dangerous
-				SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentContextMenu.values[i], 0, WHITE);
-				SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
-				SDL_DestroySurface(sur);
-
-				if(currentContextMenu.selected == i){
-					SDL_SetRenderDrawColor(renderer, MENULIST_SL_COLOR);
-					SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y + i *MENULIST_PADDING, currentContextMenu.rect.w, 15});
-				}
-			
-				SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentContextMenu.rect.x + currentContextMenu.rect.w/2 - tex->w/2, currentContextMenu.rect.y + i* MENULIST_PADDING, tex->w, tex->h});
-				SDL_DestroyTexture(tex);
-				i++;
-			}		
+		for(size_t n = 0; n < allImageLists.items[i].count; ++n){
+			SDL_Texture *img  = allImageLists.items[i].images[n];
+			// TODO: offset depends if its vertical or horizontal
+			float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET;
+			float imgPosy = allImageLists.items[i].posRect.y;
+			SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
 		}
 	}
+	
+}
+
+#define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
+#define MENULIST_FG_COLOR 0, 0, 255,   SDL_ALPHA_OPAQUE
+#define MENULIST_SL_COLOR 155, 155, 155, SDL_ALPHA_OPAQUE
+#define MENULIST_PADDING 20 + 4
+void DrawContextMenu(){
+	if(currentContextMenu.active){
+		SDL_SetRenderDrawColor(renderer, MENULIST_BG_COLOR);
+		SDL_RenderFillRect(renderer, &currentContextMenu.rect);
+
+		SDL_SetRenderDrawColor(renderer, MENULIST_FG_COLOR);
+		SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y, currentContextMenu.rect.w-4, currentContextMenu.rect.h-4});
+	
+		int i = 0;
+		while(currentContextMenu.values[i] != NULL){ // Very dangerous
+			SDL_Surface *sur = TTF_RenderText_Blended(monoRegularSmall, currentContextMenu.values[i], 0, WHITE);
+			SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, sur);
+			SDL_DestroySurface(sur);
+
+			if(currentContextMenu.selected == i){
+				SDL_SetRenderDrawColor(renderer, MENULIST_SL_COLOR);
+				SDL_RenderFillRect(renderer, &(SDL_FRect){currentContextMenu.rect.x, currentContextMenu.rect.y + i *MENULIST_PADDING, currentContextMenu.rect.w, 15});
+			}
+		
+			SDL_RenderTexture(renderer, tex, NULL, &(SDL_FRect){currentContextMenu.rect.x + currentContextMenu.rect.w/2 - tex->w/2, currentContextMenu.rect.y + i* MENULIST_PADDING, tex->w, tex->h});
+			SDL_DestroyTexture(tex);
+			i++;
+		}		
+	}
+}
 
 bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 	int centerX = rect.x + rect.w/2;
@@ -301,12 +322,14 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 
 
 void UpdateGuiElements(CONTAINER *container){
-	buttons buttonArray = allButtons;
-	labels  labelArray  = allLabels;
+	buttons buttonArray        = allButtons;
+	labels  labelArray         = allLabels;
+	image_lists imageListArray = allImageLists;
 	
 	if(container != NULL){
-		buttonArray = container->allButtons;
-		labelArray  = container->allLabels;
+		buttonArray    = container->allButtons;
+		labelArray     = container->allLabels;
+		imageListArray = container->allImageLists;
 		
 		// Container standard window
 		SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, 0xFF);
@@ -318,6 +341,7 @@ void UpdateGuiElements(CONTAINER *container){
 	// Drawing subroutines
 	DrawAllButtons(buttonArray);
 	DrawAllLabels(labelArray);
+	DrawAllImageLists(imageListArray);
 	DrawContextMenu();
 
 	SDL_Event *event = GetInputEvents();

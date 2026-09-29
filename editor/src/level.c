@@ -102,7 +102,7 @@ void InitLevel(editor_state *state){
 	textureWidth = gridWidth * tileWidth + tileWidth * 2;
 	textureHeight = gridHeight * tileHeight + tileHeight * 2;
 	gridTargetTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, textureWidth, textureHeight);
-
+ 
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_SetRenderTarget(renderer, gridTargetTexture); // Starts rendering the grid
 	DrawGrid();
@@ -198,7 +198,28 @@ static void InitNewTileset(const char *path, tile_type type){
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
 
 	// TODO: cut all SDL textures from the loaded image
-	//void AddImageList(uint8_t imagesPerPage, bool vertical, SDL_Texture *textures[], CONTAINER *container){
+	size_t cols = tilesetTex->w/tileWidth;
+	size_t rows = tilesetTex->h/(tileHeight*2);
+	size_t count = 0;
+	SDL_Texture **textures = NULL;
+
+	for(size_t row = 0; row < rows; ++row){
+		for(size_t col = 0; col < cols; ++col){
+			SDL_Texture *tileTexture;
+			tileTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, tileWidth, tileHeight*2);
+			SDL_SetRenderTarget(renderer, tileTexture); 
+			SDL_FRect srcRect = {tileWidth*col, tileHeight*2*row, tileWidth, tileHeight*2};
+			SDL_RenderTexture(renderer, tilesetTex, &srcRect, NULL);
+			SDL_SetRenderTarget(renderer, NULL); 
+
+			count++;
+			SDL_Texture **textures = (SDL_Texture**) realloc(textures, sizeof(SDL_Texture*) * count);
+			textures[count-1] = tileTexture;
+		}
+	}
+
+
+	AddImageList(2, 2, 8, 1, false, textures, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?
