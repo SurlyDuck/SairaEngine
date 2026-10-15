@@ -210,7 +210,7 @@ void AddImageList(uint16_t x, uint16_t y, uint8_t imagesPerPage, size_t imagesCo
 	image_list newList = {
 		.posRect = (SDL_FRect) {.x = x, .y = y, .w = 0, .h = 0},
 		.selected = 0,
-		.count = sizeof(*textures)/sizeof(SDL_Texture*),
+		.count = imagesCount,
 		.page = 0,
 		.imagesPerPage = imagesPerPage,
 		.vertical = vertical,
@@ -265,11 +265,10 @@ static void DrawAllLabels(labels allLabels){
 #define IMAGE_OFFSET 10
 static void DrawAllImageLists(image_lists allImageLists){
 	for(size_t i = 0; i < allImageLists.count; ++i){
-
 		for(size_t n = 0; n < allImageLists.items[i].count; ++n){
 			SDL_Texture *img  = allImageLists.items[i].images[n];
 			// TODO: offset depends if its vertical or horizontal
-			float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET;
+			float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET + img->w * n;
 			float imgPosy = allImageLists.items[i].posRect.y;
 			SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
 		}

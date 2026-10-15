@@ -213,13 +213,13 @@ static void InitNewTileset(const char *path, tile_type type){
 			SDL_SetRenderTarget(renderer, NULL); 
 
 			count++;
-			SDL_Texture **textures = (SDL_Texture**) realloc(textures, sizeof(SDL_Texture*) * count);
+			textures = (SDL_Texture**) realloc(textures, sizeof(SDL_Texture*) * count);
 			textures[count-1] = tileTexture;
 		}
 	}
 
 
-	AddImageList(2, 2, 8, 1, false, textures, selectContainer);
+	AddImageList(2, 2, 8, 3, false, textures, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?
