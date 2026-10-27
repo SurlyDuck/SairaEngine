@@ -197,12 +197,12 @@ static void InitNewTileset(const char *path, tile_type type){
 	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
 
-	// TODO: cut all SDL textures from the loaded image
 	size_t cols = tilesetTex->w/tileWidth;
 	size_t rows = tilesetTex->h/(tileHeight*2);
 	size_t count = 0;
 	SDL_Texture **textures = NULL;
 
+	// cut all SDL textures from the loaded image
 	for(size_t row = 0; row < rows; ++row){
 		for(size_t col = 0; col < cols; ++col){
 			SDL_Texture *tileTexture;
@@ -219,7 +219,8 @@ static void InitNewTileset(const char *path, tile_type type){
 	}
 
 
-	AddImageList(2, 2, 8, 3, false, textures, selectContainer);
+// AddImageList(uint16_t x, uint16_t y, uint8_t w, uint8_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
+	AddImageList(2, 2, tileWidth * 6, tileHeight * 2 * 4, count, textures, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?

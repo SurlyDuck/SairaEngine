@@ -45,7 +45,7 @@ int main(){
 			if(event.type == SDL_EVENT_QUIT){
 				running = false;
 			  	break;
-			}else if(event.type == SDL_EVENT_KEY_DOWN || SDL_EVENT_MOUSE_BUTTON_DOWN){
+			}else if(event.type == SDL_EVENT_KEY_DOWN || SDL_EVENT_MOUSE_BUTTON_DOWN || SDL_EVENT_MOUSE_WHEEL){
 				AddInputEventBuffer(event);
 				if(event.key.key == SDLK_ESCAPE && !IsGuiBusy()){ 
 					running = false;

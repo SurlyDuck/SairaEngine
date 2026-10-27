@@ -35,9 +35,7 @@ typedef struct{
 typedef struct{
 	uint8_t selected;
 	uint8_t count;
-	uint8_t page;
-	uint8_t imagesPerPage;
-	bool vertical;
+	uint8_t offset;
 	SDL_Texture **images;
 	SDL_FRect posRect;
 }image_list;
@@ -206,14 +204,12 @@ void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Colo
 	DA_APPEND(newLabel, (&allLabels));
 }
 
-void AddImageList(uint16_t x, uint16_t y, uint8_t imagesPerPage, size_t imagesCount, bool vertical, SDL_Texture **textures, CONTAINER *container){
+void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container){
 	image_list newList = {
-		.posRect = (SDL_FRect) {.x = x, .y = y, .w = 0, .h = 0},
+		.posRect = (SDL_FRect) {.x = x, .y = y, .w = w, .h = h},
 		.selected = 0,
 		.count = imagesCount,
-		.page = 0,
-		.imagesPerPage = imagesPerPage,
-		.vertical = vertical,
+		.offset = 0,
 		.images = textures
 	};
 
@@ -265,11 +261,22 @@ static void DrawAllLabels(labels allLabels){
 #define IMAGE_OFFSET 10
 static void DrawAllImageLists(image_lists allImageLists){
 	for(size_t i = 0; i < allImageLists.count; ++i){
-		for(size_t n = 0; n < allImageLists.items[i].count; ++n){
+ 		float imgPosx = allImageLists.items[i].posRect.x;	
+   	float imgPosy = allImageLists.items[i].posRect.y;
+
+		for(size_t n = allImageLists.items[i].offset; n < allImageLists.items[i].count; ++n){
 			SDL_Texture *img  = allImageLists.items[i].images[n];
-			// TODO: offset depends if its vertical or horizontal
-			float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET + img->w * n;
-			float imgPosy = allImageLists.items[i].posRect.y;
+			// float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET + img->w * n ;
+			// float imgPosy = allImageLists.items[i].posRect.y;
+
+			imgPosx += img->w  * (n>0);
+			if(imgPosx - img->w >= allImageLists.items[i].posRect.w){
+				imgPosx  = allImageLists.items[i].posRect.x;
+				imgPosy += img->h + IMAGE_OFFSET;
+
+				if(imgPosy + img->h >= allImageLists.items[i].posRect.h) break;
+			}
+
 			SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
 		}
 	}
@@ -401,7 +408,15 @@ void UpdateGuiElements(CONTAINER *container){
 					}							
 				}
 					break;
+			}
+			case SDL_EVENT_MOUSE_WHEEL: {
+				for(size_t i = 0; i < imageListArray.count; i++){
+					printf("Mouse wheel: %.2f \n", event->wheel.y);
+					image_list *imgListPtr = &imageListArray.items[i];
+					imgListPtr->offset += event->wheel.y;
+					imgListPtr->offset = imgListPtr->offset % imgListPtr->count;  
 				}
+			}
 			default: break;
 		}
 	}
