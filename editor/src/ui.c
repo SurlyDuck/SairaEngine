@@ -261,24 +261,43 @@ static void DrawAllLabels(labels allLabels){
 #define IMAGE_OFFSET 10
 static void DrawAllImageLists(image_lists allImageLists){
 	for(size_t i = 0; i < allImageLists.count; ++i){
- 		float imgPosx = allImageLists.items[i].posRect.x;	
-   	float imgPosy = allImageLists.items[i].posRect.y;
+		// Assuming all images have the same size (the case of a tile atlas)
+		image_list list = allImageLists.items[i];
+		size_t rows   = list.posRect.h / list.images[0]->h;
+		size_t groups = list.count / rows;
+ 		float imgPosx = list.posRect.x;	
+   	float imgPosy = list.posRect.y;
 
-		for(size_t n = allImageLists.items[i].offset; n < allImageLists.items[i].count; ++n){
-			SDL_Texture *img  = allImageLists.items[i].images[n];
-			// float imgPosx = allImageLists.items[i].posRect.x + IMAGE_OFFSET + img->w * n ;
-			// float imgPosy = allImageLists.items[i].posRect.y;
+		for(size_t n = list.offset; n < groups; ++n){
+			for(size_t r = 0; r < rows; ++r){
+				SDL_Texture *img = list.images[((n * rows) + r) % list.count];
 
-			imgPosx += img->w  * (n>0);
-			if(imgPosx - img->w >= allImageLists.items[i].posRect.w){
-				imgPosx  = allImageLists.items[i].posRect.x;
-				imgPosy += img->h + IMAGE_OFFSET;
-
-				if(imgPosy + img->h >= allImageLists.items[i].posRect.h) break;
+				SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
+				imgPosy += list.images[0]->h;	
 			}
+			imgPosx += list.images[0]->w;	
+   		imgPosy = list.posRect.y;
 
-			SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
+			if(imgPosx-list.posRect.x >= list.posRect.w) break;
 		}
+		
+		///////////////////////////
+ 		//float imgPosx = allImageLists.items[i].posRect.x;	
+   	//float imgPosy = allImageLists.items[i].posRect.y;
+		//	
+		//for(size_t n = allImageLists.items[i].offset; n < allImageLists.items[i].count; ++n){
+		//	SDL_Texture *img  = allImageLists.items[i].images[n];
+		//		
+		//	imgPosx += img->w  * (n>0);
+		//	if(imgPosx - img->w >= allImageLists.items[i].posRect.w){
+		//		imgPosx  = allImageLists.items[i].posRect.x;
+		//		imgPosy += img->h + IMAGE_OFFSET;
+
+		//		if(imgPosy + img->h >= allImageLists.items[i].posRect.h) break;
+		//	}
+
+		//	SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
+		//}
 	}
 	
 }
@@ -463,19 +482,34 @@ static void DestroyLabels(labels *labelArray){
 	DA_CLEAR(labelArray);
 }
 
+static void DestroyLists(image_lists *listArray){
+	if(listArray->items == NULL) return;
+	
+	for(size_t i = 0; i < listArray->count; ++i){
+		for(size_t n = 0; n < listArray->items[i].count; ++n){
+			SDL_DestroyTexture(listArray->items[i].images[n]);
+			printf("Destroying image\n");
+		}
+	}
+	DA_CLEAR(listArray);
+}
+
 void DestroyGuiElements(CONTAINER *container){
-	buttons *buttonArray = &allButtons;
-	labels  *labelArray  = &allLabels;
-	context_menu *cmenu  = &currentContextMenu;
+	buttons *buttonArray   = &allButtons;
+	labels  *labelArray    = &allLabels;
+	context_menu *cmenu    = &currentContextMenu;
+	image_lists *listArray = &allImageLists;
 
 	if(container != NULL){
 		buttonArray = &(container->allButtons);
 		labelArray  = &(container->allLabels);
 		cmenu       = &(container->currentContextMenu);
+		listArray   = &(container->allImageLists);
 	}
 
 	DestroyButtons(buttonArray);
 	DestroyLabels(labelArray);
+	DestroyLists(listArray);
 
 	cmenu->active = false;
 }

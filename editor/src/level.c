@@ -220,7 +220,7 @@ static void InitNewTileset(const char *path, tile_type type){
 
 
 // AddImageList(uint16_t x, uint16_t y, uint8_t w, uint8_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
-	AddImageList(2, 2, tileWidth * 6, tileHeight * 2 * 4, count, textures, selectContainer);
+	AddImageList(2, 2, tileWidth * 5, tileHeight * 2 * 2, count, textures, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?
