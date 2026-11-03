@@ -43,8 +43,8 @@
 #define WINDOW_WIDTH  1360
 #define WINDOW_HEIGHT  730
 
-#define WHITE (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE}
-#define RED (SDL_Color){255, 0, 0, SDL_ALPHA_OPAQUE}
+#define WHITE             (SDL_Color){255, 255, 255, SDL_ALPHA_OPAQUE}
+#define RED               (SDL_Color){255, 0, 0, SDL_ALPHA_OPAQUE}
 
 //------------------------------------------------------------------------------------
 // Macros for dealing with dynamic arrays

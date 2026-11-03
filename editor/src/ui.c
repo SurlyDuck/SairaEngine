@@ -33,10 +33,26 @@ typedef struct{
 }labels;
 
 typedef struct{
-	uint8_t selected;
-	uint8_t count;
+	uint16_t x;
+	uint16_t y;
+	bool isVisible;
+	bool isSelected;
+	SDL_Texture *texture;
+}image;
+
+typedef struct {
+	image *items;
+	size_t count;
+	size_t capacity;
+}images;
+
+// The actual displayable and modifiable widget 
+// show a list of selectable images on a 
+// window or container
+typedef struct{
+	uint8_t count; // Redundant due to images?
 	uint8_t offset;
-	SDL_Texture **images;
+	images allImages;
 	SDL_FRect posRect;
 }image_list;
 
@@ -205,13 +221,19 @@ void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Colo
 }
 
 void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container){
-	image_list newList = {
-		.posRect = (SDL_FRect) {.x = x, .y = y, .w = w, .h = h},
-		.selected = 0,
-		.count = imagesCount,
-		.offset = 0,
-		.images = textures
-	};
+	image_list newList = {0};
+	image newImage     = {0};
+	images allImages   = {0};
+
+	for(size_t i = 0; i < imagesCount; ++i){
+		newImage.texture = textures[i];
+	
+		DA_APPEND(newImage, (&allImages));
+	}
+
+	newList.posRect = (SDL_FRect) {.x = x, .y = y, .w = w, .h = h};
+	newList.count = imagesCount,
+	newList.allImages = allImages;
 
 	if(container == NULL)
 		DA_APPEND(newList, (&allImageLists));
@@ -258,48 +280,49 @@ static void DrawAllLabels(labels allLabels){
 	}
 }
 
-#define IMAGE_OFFSET 10
 static void DrawAllImageLists(image_lists allImageLists){
 	for(size_t i = 0; i < allImageLists.count; ++i){
 		// Assuming all images have the same size (the case of a tile atlas)
 		image_list list = allImageLists.items[i];
-		size_t rows   = list.posRect.h / list.images[0]->h;
+		size_t rows   = list.posRect.h / list.allImages.items[0].texture->h;
 		size_t groups = list.count / rows;
  		float imgPosx = list.posRect.x;	
    	float imgPosy = list.posRect.y;
-
+		
+		for(size_t n = 0; n < list.count; ++n) list.allImages.items[n].isVisible = false;
+		
 		for(size_t n = list.offset; n < groups; ++n){
 			for(size_t r = 0; r < rows; ++r){
-				SDL_Texture *img = list.images[((n * rows) + r) % list.count];
-
+				SDL_Texture *img = list.allImages.items[((n * rows) + r) % list.count].texture;
+				list.allImages.items[((n * rows) + r) % list.count].isVisible = true;
+				list.allImages.items[((n * rows) + r) % list.count].x = imgPosx;
+				list.allImages.items[((n * rows) + r) % list.count].y = imgPosy;
+				
+				// Texture
 				SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
-				imgPosy += list.images[0]->h;	
+				
+				// Grid
+				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+				SDL_SetRenderDrawColor(renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a/4);
+				SDL_RenderRect(renderer, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
+
+				// Selection
+				if(list.allImages.items[((n * rows) + r) % list.count].isSelected){
+					SDL_SetRenderDrawColor(renderer, RED.r, RED.g, RED.b, RED.a);
+					SDL_RenderFillRect(renderer, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
+				}
+
+				
+				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE); // Unnecessary?
+				imgPosy += list.allImages.items[0].texture->h;	
+
 			}
-			imgPosx += list.images[0]->w;	
+			imgPosx += list.allImages.items[0].texture->w;	
    		imgPosy = list.posRect.y;
 
 			if(imgPosx-list.posRect.x >= list.posRect.w) break;
 		}
-		
-		///////////////////////////
- 		//float imgPosx = allImageLists.items[i].posRect.x;	
-   	//float imgPosy = allImageLists.items[i].posRect.y;
-		//	
-		//for(size_t n = allImageLists.items[i].offset; n < allImageLists.items[i].count; ++n){
-		//	SDL_Texture *img  = allImageLists.items[i].images[n];
-		//		
-		//	imgPosx += img->w  * (n>0);
-		//	if(imgPosx - img->w >= allImageLists.items[i].posRect.w){
-		//		imgPosx  = allImageLists.items[i].posRect.x;
-		//		imgPosy += img->h + IMAGE_OFFSET;
-
-		//		if(imgPosy + img->h >= allImageLists.items[i].posRect.h) break;
-		//	}
-
-		//	SDL_RenderTexture(GetRenderer(), img, NULL, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
-		//}
 	}
-	
 }
 
 #define MENULIST_BG_COLOR 0, 255, 0,   SDL_ALPHA_OPAQUE
@@ -399,6 +422,19 @@ void UpdateGuiElements(CONTAINER *container){
 							break;
 						}
 					}
+
+					for(size_t i = 0; i < imageListArray.count; ++i){ // Image lists
+						for(size_t n = 0; n < imageListArray.items[i].count; ++n){
+							image *img = &imageListArray.items[i].allImages.items[n];
+							if(!img->isVisible) continue;
+
+							SDL_FRect imageRect = {img->x, img->y, img->texture->w, img->texture->h};
+							if(IsPointOverlayingRect(event->button.x, event->button.y, imageRect)){
+								img->isSelected = !img->isSelected;
+							}
+						}
+					}
+
 				}
 				break;
 			}
@@ -428,9 +464,9 @@ void UpdateGuiElements(CONTAINER *container){
 				}
 					break;
 			}
-			case SDL_EVENT_MOUSE_WHEEL: {
+			case SDL_EVENT_MOUSE_WHEEL: { // TODO: check mouse focus first for image lists
 				for(size_t i = 0; i < imageListArray.count; i++){
-					printf("Mouse wheel: %.2f \n", event->wheel.y);
+					//printf("Mouse wheel: %.2f \n", event->wheel.y);
 					image_list *imgListPtr = &imageListArray.items[i];
 					imgListPtr->offset += event->wheel.y;
 					imgListPtr->offset = imgListPtr->offset % imgListPtr->count;  
@@ -487,8 +523,8 @@ static void DestroyLists(image_lists *listArray){
 	
 	for(size_t i = 0; i < listArray->count; ++i){
 		for(size_t n = 0; n < listArray->items[i].count; ++n){
-			SDL_DestroyTexture(listArray->items[i].images[n]);
-			printf("Destroying image\n");
+			//printf("Destroying: %p\n", (void*)(listArray->items[i].allImages.items[n].texture));
+			SDL_DestroyTexture(listArray->items[i].allImages.items[n].texture);
 		}
 	}
 	DA_CLEAR(listArray);

@@ -196,6 +196,7 @@ static void InitNewTileset(const char *path, tile_type type){
 	// GUI container
 	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
+	AddStdButton(WINDOW_WIDTH/2-220, WINDOW_HEIGHT/2-40, 100, 40, "Ok", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
 
 	size_t cols = tilesetTex->w/tileWidth;
 	size_t rows = tilesetTex->h/(tileHeight*2);
