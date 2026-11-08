@@ -26,8 +26,16 @@ typedef enum tile_type{
 	MISC
 }tile_type;
 
+typedef struct tileset{
+	tile_type type;
+	images tilesetImages;
+	uint8_t gridWidth;
+	uint8_t gridHeight;
+}tileset;
+
 typedef struct tile{
-	SDL_Texture *texture;
+	tileset tileTexture;
+	size_t textureID;
 	tile_type type;
 	uint16_t x;
 	uint16_t y;
@@ -39,14 +47,6 @@ typedef struct tiles{
 	size_t count;
 	size_t capacity;
 }tiles;
-
-typedef struct tileset{
-	bool enabled;
-	SDL_Texture *texture;
-	tile_type type;
-	uint8_t gridWidth;
-	uint8_t gridHeight;
-}tileset;
 
 // Locals
 editor_state_id nextState;
@@ -63,6 +63,9 @@ static tiles wallArray                 = {0};
 static tiles floorArray                = {0};
 static tiles miscArray                 = {0};
 static tileset newTileSet              = {0};
+static tileset wallTileset             = {0};
+static tileset floorTileset            = {0};
+static tileset miscTileset             = {0};
 static CONTAINER *selectContainer      = NULL;
 
 // Local foward declarations
@@ -171,6 +174,18 @@ void _OnButtonSelectorCancel(){
 	selectContainer = NULL;
 }
 
+void _OnButtonSelectorOk(){
+	// TODO:
+	//			- New image set containing only the selected images
+	// 		- Make a copy of the the selected textures into dynamic memory (SDL_Texture)
+	//			- Destroy the select container, freeing what is not used
+	//			- Append new images to the right type of tileset
+}
+
+void _OnSelectorChanged(images img){
+	newTileSet.tilesetImages = img;
+}
+
 static void InitNewTileset(const char *path, tile_type type){
 	// Initialize new tile set for use in the tile selector subroutine
 	SDL_Texture *tilesetTex = NULL;
@@ -179,14 +194,11 @@ static void InitNewTileset(const char *path, tile_type type){
 		printf("Couldn't load tileset texture: %s\n", path);
 		return;
 	}
-	
-	newTileSet = (tileset){
-		.enabled = true,
-		.texture = tilesetTex,
-		.type = type,
-		.gridWidth = 128,
-		.gridHeight = 128,
-	};
+
+	newTileSet.type = type;
+	newTileSet.tilesetImages = (images){0};
+	newTileSet.gridWidth = 128;
+	newTileSet.gridHeight = 128;	
 	
 	if(selectContainer != NULL){
 		DestroyContainer(selectContainer);
@@ -196,7 +208,7 @@ static void InitNewTileset(const char *path, tile_type type){
 	// GUI container
 	selectContainer = InitContainer(WINDOW_WIDTH/2-(WINDOW_WIDTH/2/2), WINDOW_HEIGHT/2-(WINDOW_HEIGHT/2/2), WINDOW_WIDTH/2, WINDOW_HEIGHT/2, TOP_LEFT);
 	AddStdButton(WINDOW_WIDTH/2-100, WINDOW_HEIGHT/2-40, 100, 40, "Cancel", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
-	AddStdButton(WINDOW_WIDTH/2-220, WINDOW_HEIGHT/2-40, 100, 40, "Ok", monoRegularMedium, _OnButtonSelectorCancel, selectContainer);
+	AddStdButton(WINDOW_WIDTH/2-220, WINDOW_HEIGHT/2-40, 100, 40, "Ok", monoRegularMedium, _OnButtonSelectorOk, selectContainer);
 
 	size_t cols = tilesetTex->w/tileWidth;
 	size_t rows = tilesetTex->h/(tileHeight*2);
@@ -221,7 +233,7 @@ static void InitNewTileset(const char *path, tile_type type){
 
 
 // AddImageList(uint16_t x, uint16_t y, uint8_t w, uint8_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
-	AddImageList(2, 2, tileWidth * 5, tileHeight * 2 * 2, count, textures, selectContainer);
+	AddImageList(2, 2, tileWidth * 5, tileHeight * 2 * 2, count, textures, _OnSelectorChanged, selectContainer);
 } 
 
 // TODO: maybe move this somewhere else?

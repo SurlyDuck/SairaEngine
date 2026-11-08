@@ -132,6 +132,20 @@ typedef enum{
 	BOTTOM_RIGHT,
 }origin;
 
+typedef struct{
+	uint16_t x;
+	uint16_t y;
+	bool isVisible;
+	bool isSelected;
+	SDL_Texture *texture;
+}image;
+
+typedef struct {
+	image *items;
+	size_t count;
+	size_t capacity;
+}images;
+
 typedef struct CONTAINER CONTAINER;
 
 extern CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, origin or);
@@ -139,7 +153,7 @@ extern void DestroyContainer(CONTAINER *container);
 extern void AddButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *idleTexture,const char *hoverTexture, const char *pressedTexture, void (*CallBack)());
 extern void AddStdButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *text, TTF_Font *font, void (*Callback)(), CONTAINER *container);
 extern void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Color color, origin or, CONTAINER *container);
-void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
+void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, void (*callback)(images), CONTAINER *container);
 extern void UpdateGuiElements(CONTAINER *container);
 extern void DestroyGuiElements(CONTAINER *container);
 extern void ShowContextMenu(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char *list[], void (*Callback)(const char *val), origin or);

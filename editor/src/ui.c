@@ -32,24 +32,11 @@ typedef struct{
 	size_t capacity;
 }labels;
 
-typedef struct{
-	uint16_t x;
-	uint16_t y;
-	bool isVisible;
-	bool isSelected;
-	SDL_Texture *texture;
-}image;
-
-typedef struct {
-	image *items;
-	size_t count;
-	size_t capacity;
-}images;
-
 // The actual displayable and modifiable widget 
 // show a list of selectable images on a 
 // window or container
 typedef struct{
+	void (*callback)(images);
 	uint8_t count; // Redundant due to images?
 	uint8_t offset;
 	images allImages;
@@ -220,7 +207,7 @@ void AddLabel(const char *text, uint16_t x, uint16_t y, TTF_Font *font, SDL_Colo
 	DA_APPEND(newLabel, (&allLabels));
 }
 
-void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container){
+void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, void (*callback)(images), CONTAINER *container){
 	image_list newList = {0};
 	image newImage     = {0};
 	images allImages   = {0};
@@ -234,7 +221,8 @@ void AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesC
 	newList.posRect = (SDL_FRect) {.x = x, .y = y, .w = w, .h = h};
 	newList.count = imagesCount,
 	newList.allImages = allImages;
-
+	newList.callback = callback;
+	
 	if(container == NULL)
 		DA_APPEND(newList, (&allImageLists));
 	else{
@@ -308,7 +296,7 @@ static void DrawAllImageLists(image_lists allImageLists){
 
 				// Selection
 				if(list.allImages.items[((n * rows) + r) % list.count].isSelected){
-					SDL_SetRenderDrawColor(renderer, RED.r, RED.g, RED.b, RED.a);
+					SDL_SetRenderDrawColor(renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a/4);
 					SDL_RenderFillRect(renderer, &(SDL_FRect){imgPosx, imgPosy, img->w, img->h});
 				}
 
@@ -372,12 +360,14 @@ bool IsPointOverlayingRect(int px, int py, SDL_FRect rect){
 void UpdateGuiElements(CONTAINER *container){
 	buttons buttonArray        = allButtons;
 	labels  labelArray         = allLabels;
-	image_lists imageListArray = allImageLists;
+	image_lists *imageListArray = &allImageLists;
 	
 	if(container != NULL){
+		// Warning: things that can change should be pointers to dynamic arrays	
+		// Otherwise they can change on events and we will end up iterating through a freed widget
 		buttonArray    = container->allButtons;
 		labelArray     = container->allLabels;
-		imageListArray = container->allImageLists;
+		imageListArray = &container->allImageLists;
 		
 		// Container standard window
 		SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, 0xFF);
@@ -389,7 +379,7 @@ void UpdateGuiElements(CONTAINER *container){
 	// Drawing subroutines
 	DrawAllButtons(buttonArray);
 	DrawAllLabels(labelArray);
-	DrawAllImageLists(imageListArray);
+	DrawAllImageLists(*imageListArray);
 	DrawContextMenu();
 
 	SDL_Event *event = GetInputEvents();
@@ -423,14 +413,16 @@ void UpdateGuiElements(CONTAINER *container){
 						}
 					}
 
-					for(size_t i = 0; i < imageListArray.count; ++i){ // Image lists
-						for(size_t n = 0; n < imageListArray.items[i].count; ++n){
-							image *img = &imageListArray.items[i].allImages.items[n];
+					for(size_t i = 0; i < imageListArray->count; ++i){ // Image lists
+						for(size_t n = 0; n < imageListArray->items[i].count; ++n){
+							image *img = &imageListArray->items[i].allImages.items[n];
 							if(!img->isVisible) continue;
 
 							SDL_FRect imageRect = {img->x, img->y, img->texture->w, img->texture->h};
 							if(IsPointOverlayingRect(event->button.x, event->button.y, imageRect)){
 								img->isSelected = !img->isSelected;
+								imageListArray->items[i].callback(imageListArray->items[i].allImages);
+								break;
 							}
 						}
 					}
@@ -465,9 +457,9 @@ void UpdateGuiElements(CONTAINER *container){
 					break;
 			}
 			case SDL_EVENT_MOUSE_WHEEL: { // TODO: check mouse focus first for image lists
-				for(size_t i = 0; i < imageListArray.count; i++){
+				for(size_t i = 0; i < imageListArray->count; i++){
 					//printf("Mouse wheel: %.2f \n", event->wheel.y);
-					image_list *imgListPtr = &imageListArray.items[i];
+					image_list *imgListPtr = &imageListArray->items[i];
 					imgListPtr->offset += event->wheel.y;
 					imgListPtr->offset = imgListPtr->offset % imgListPtr->count;  
 				}
