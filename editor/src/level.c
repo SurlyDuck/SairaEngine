@@ -128,93 +128,100 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 	float mouseXMotion, mouseYMotion;
 	if(IsMouseBeingDragged(&mouseXMotion, &mouseYMotion)){
 
-		gridTargetRect.x += -mouseXMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
-		gridTargetRect.y += -mouseYMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
-	}
-
-	if(gridTargetRect.x+gridTargetRect.w >= textureWidth || gridTargetRect.x < 0) gridTargetRect.x = cpyTemp.x;
-	if(gridTargetRect.y+gridTargetRect.y >= textureHeight || gridTargetRect.y < 0) gridTargetRect.y = cpyTemp.y;
-
-	// Screen margins
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderRect(renderer, &gridScreenRect);
-	
-	SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
-
-	UpdateGuiElements(NULL);
-
-	if(selectContainer       != NULL) UpdateGuiElements(selectContainer);	
-	if(wallTilesetContainer  != NULL) UpdateGuiElements(wallTilesetContainer);
-	if(floorTilesetContainer != NULL) UpdateGuiElements(floorTilesetContainer);
-	if(miscTilesetContainer  != NULL) UpdateGuiElements(miscTilesetContainer);
-	
-	return nextState;
-}
-
-static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h){
-	SDL_RenderLine(renderer, w/2-1 + x, h-1 + y, x, h/2 + y);
-	SDL_RenderLine(renderer, w/2 + x, h-1 + y, w-1 + x, h/2 + y);
-	SDL_RenderLine(renderer, w/2-1 + x, y, x, h/2 + y);
-	SDL_RenderLine(renderer, w/2 + x, y, w-1 + x, h/2 + y);
-
-}
-
-static void DrawGrid(){
-	uint16_t tileStartX = textureWidth/2 - tileWidth/2;
-	uint16_t tileStartY = tileHeight;
-	for(uint16_t x = 0; x < gridWidth; ++x){
-		for(uint16_t y = 0; y < gridHeight; ++y){
-			uint16_t px = (x-y) * (tileWidth/2) + tileStartX;
-			uint16_t py = (x+y) * (tileHeight/2) + tileStartY;
-
-			DrawTile(px, py, tileWidth, tileHeight);
+			gridTargetRect.x += -mouseXMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
+			gridTargetRect.y += -mouseYMotion * CAMERA_SPEED/8.0f * 16.0f/1000.0f;
 		}
+
+		if(gridTargetRect.x+gridTargetRect.w >= textureWidth || gridTargetRect.x < 0) gridTargetRect.x = cpyTemp.x;
+		if(gridTargetRect.y+gridTargetRect.y >= textureHeight || gridTargetRect.y < 0) gridTargetRect.y = cpyTemp.y;
+
+		// Screen margins
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		SDL_RenderRect(renderer, &gridScreenRect);
+		
+		SDL_RenderTexture(renderer, gridTargetTexture, &gridTargetRect, &gridScreenRect);
+
+		UpdateGuiElements(NULL);
+
+		if(selectContainer       != NULL) UpdateGuiElements(selectContainer);	
+		if(wallTilesetContainer  != NULL) UpdateGuiElements(wallTilesetContainer);
+		if(floorTilesetContainer != NULL) UpdateGuiElements(floorTilesetContainer);
+		if(miscTilesetContainer  != NULL) UpdateGuiElements(miscTilesetContainer);
+		
+		return nextState;
 	}
-}
 
-void _OnButtonSelectorCancel(){
-	DestroyContainer(selectContainer);
-	selectContainer = NULL;
-}
+	static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h){
+		SDL_RenderLine(renderer, w/2-1 + x, h-1 + y, x, h/2 + y);
+		SDL_RenderLine(renderer, w/2 + x, h-1 + y, w-1 + x, h/2 + y);
+		SDL_RenderLine(renderer, w/2-1 + x, y, x, h/2 + y);
+		SDL_RenderLine(renderer, w/2 + x, y, w-1 + x, h/2 + y);
 
-void _OnButtonSelectorOk(){
-	CONTAINER **newTilesetContainer   = NULL;
-	SDL_FRect newTilesetContainerRect = {0};
-	for(size_t i = 0; i < newTileSet.tilesetImages.count; i++){
-		if(newTileSet.tilesetImages.items[i].isSelected){
-			// Old texture from the image list will be freed, so save it to newTexture
-			SDL_Texture *oldTexture = newTileSet.tilesetImages.items[i].texture;
-			SDL_Texture *newTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, oldTexture->w,oldTexture->h);
-			SDL_SetRenderTarget(renderer, newTexture);
-			SDL_RenderTexture(renderer, oldTexture, NULL, NULL);
-			SDL_SetRenderTarget(renderer, NULL);
-			
-			// Append new image to the tileset image dynamic array
-			image newImage = {0};
-			newImage.isVisible = true;
-			newImage.texture   = newTexture;
+	}
 
-			switch(newTileSet.type){
-				case WALL: {
-					DA_APPEND(newImage, (&wallTileset.tilesetImages));  
-					newTilesetContainer = &wallTilesetContainer;
-					newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 50, .w = WINDOW_WIDTH /2, .h = 70};
-				}break;
-				case FLOOR: {
-					DA_APPEND(newImage, (&floorTileset.tilesetImages)); 
-					newTilesetContainer = &floorTilesetContainer; 
-					newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 120, .w = WINDOW_WIDTH /2, .h = 70};
-				}break;
-				case MISC: {
-					DA_APPEND(newImage, (&miscTileset.tilesetImages));  
-					newTilesetContainer = &miscTilesetContainer; 
-					newTilesetContainerRect = (SDL_FRect){.x = WINDOW_WIDTH/2, .y = 50, .w = WINDOW_WIDTH /2 - 1, .h = 140};
-				}break;
-				default: break;
+	static void DrawGrid(){
+		uint16_t tileStartX = textureWidth/2 - tileWidth/2;
+		uint16_t tileStartY = tileHeight;
+		for(uint16_t x = 0; x < gridWidth; ++x){
+			for(uint16_t y = 0; y < gridHeight; ++y){
+				uint16_t px = (x-y) * (tileWidth/2) + tileStartX;
+				uint16_t py = (x+y) * (tileHeight/2) + tileStartY;
+
+				DrawTile(px, py, tileWidth, tileHeight);
 			}
 		}
 	}
 
+	void _OnButtonSelectorCancel(){
+		DestroyContainer(selectContainer);
+		selectContainer = NULL;
+	}
+
+	void _OnButtonSelectorOk(){
+		CONTAINER **newTilesetContainer   = NULL;
+		tileset    *destTileset      	    = NULL;
+		SDL_FRect newTilesetContainerRect = {0};
+
+		switch(newTileSet.type){
+			case WALL: {
+				destTileset = &wallTileset;
+				newTilesetContainer = &wallTilesetContainer;
+				newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 50, .w = WINDOW_WIDTH /2, .h = 70};
+			}break;
+			case FLOOR: {
+				destTileset = &floorTileset;
+				newTilesetContainer = &floorTilesetContainer; 
+				newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 120, .w = WINDOW_WIDTH /2, .h = 70};
+			}break;
+			case MISC: {
+				destTileset = &miscTileset;  
+				newTilesetContainer = &miscTilesetContainer; 
+				newTilesetContainerRect = (SDL_FRect){.x = WINDOW_WIDTH/2, .y = 50, .w = WINDOW_WIDTH /2 - 1, .h = 140};
+			}break;
+			default: break;
+		}
+
+		for(size_t i = 0; i < newTileSet.tilesetImages.count; i++){
+			if(newTileSet.tilesetImages.items[i].isSelected){
+				// Old texture from the image list will be freed, so save it to newTexture
+				SDL_Texture *oldTexture = newTileSet.tilesetImages.items[i].texture;
+				SDL_Texture *newTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, oldTexture->w,oldTexture->h);
+				SDL_SetRenderTarget(renderer, newTexture);
+				SDL_RenderTexture(renderer, oldTexture, NULL, NULL);
+				SDL_SetRenderTarget(renderer, NULL);
+			
+				// Append new image to the tileset image dynamic array
+				image newImage = {0};
+				newImage.isVisible = true;
+				newImage.texture   = newTexture;
+
+			DA_APPEND(newImage, (&destTileset->tilesetImages));  
+			
+		}
+	}
+	
+	// Create a new container containing a image list
+	// The image list will contain a miniature version of each image at the tileset
 	DestroyContainer(selectContainer);
 	selectContainer = NULL;
 	
@@ -223,10 +230,20 @@ void _OnButtonSelectorOk(){
 	
 	*newTilesetContainer = InitContainer(newTilesetContainerRect.x, newTilesetContainerRect.y, 
 													newTilesetContainerRect.w, newTilesetContainerRect.h, TOP_LEFT);
-
 	
-	//AddImageList(uint16_t x, uint16_t y, uint8_t w, uint8_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
-	//AddImageList(2, 2, tileWidth * 5, tileHeight * 2 * 2, count, textures, _OnSelectorChanged, *newTilesetContainer);
+	SDL_Texture **miniatures = malloc(sizeof(SDL_Texture*) * destTileset->tilesetImages.count);
+	for(size_t i = 0; i < destTileset->tilesetImages.count; ++i){
+			SDL_Texture *miniature = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, tileWidth/4, tileHeight/2);
+			SDL_SetRenderTarget(renderer, miniature);
+			SDL_RenderTexture(renderer, destTileset->tilesetImages.items[i].texture, NULL, &(SDL_FRect){0, 0, tileWidth/4, tileHeight/2});
+			SDL_SetRenderTarget(renderer, NULL);
+
+			miniatures[i] = miniature;
+	}
+	
+	printf("%lu\n", destTileset->tilesetImages.count);
+	//AddImageList(uint16_t x, uint16_t y, uint16_t w, uint16_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
+	AddImageList(0, 0, tileWidth/4 * 5, tileHeight/2 * 1, destTileset->tilesetImages.count, miniatures, NULL, *newTilesetContainer);
 	
 }
 
