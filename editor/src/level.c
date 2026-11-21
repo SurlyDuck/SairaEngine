@@ -56,17 +56,20 @@ static uint16_t gridWidth      = 16; // Maybe move grid variables into a `world`
 static uint16_t gridHeight     = 16;
 static uint16_t tileWidth      = 128;
 static uint16_t tileHeight     = 64; 
-static SDL_Texture *gridTargetTexture  = NULL;
-static SDL_FRect gridScreenRect        = {0};
-static SDL_FRect gridTargetRect        = {0};
-static tiles wallArray                 = {0};
-static tiles floorArray                = {0};
-static tiles miscArray                 = {0};
-static tileset newTileSet              = {0};
-static tileset wallTileset             = {0};
-static tileset floorTileset            = {0};
-static tileset miscTileset             = {0};
-static CONTAINER *selectContainer      = NULL;
+static SDL_Texture *gridTargetTexture   = NULL;
+static SDL_FRect gridScreenRect         = {0};
+static SDL_FRect gridTargetRect         = {0};
+static tiles wallArray                  = {0};
+static tiles floorArray                 = {0};
+static tiles miscArray                  = {0};
+static tileset newTileSet               = {0};
+static tileset wallTileset              = {0};
+static tileset floorTileset             = {0};
+static tileset miscTileset              = {0};
+static CONTAINER *selectContainer       = NULL;
+static CONTAINER *wallTilesetContainer  = NULL;
+static CONTAINER *floorTilesetContainer = NULL;
+static CONTAINER *miscTilesetContainer  = NULL;
 
 // Local foward declarations
 static void DrawTile(uint16_t x, uint16_t y, uint8_t w, uint8_t h);
@@ -140,9 +143,10 @@ editor_state_id UpdateLevel(SDL_Renderer *renderer){
 
 	UpdateGuiElements(NULL);
 
-	if(selectContainer != NULL){ 
-		UpdateGuiElements(selectContainer);	
-	}
+	if(selectContainer       != NULL) UpdateGuiElements(selectContainer);	
+	if(wallTilesetContainer  != NULL) UpdateGuiElements(wallTilesetContainer);
+	if(floorTilesetContainer != NULL) UpdateGuiElements(floorTilesetContainer);
+	if(miscTilesetContainer  != NULL) UpdateGuiElements(miscTilesetContainer);
 	
 	return nextState;
 }
@@ -165,7 +169,6 @@ static void DrawGrid(){
 
 			DrawTile(px, py, tileWidth, tileHeight);
 		}
-		
 	}
 }
 
@@ -175,11 +178,56 @@ void _OnButtonSelectorCancel(){
 }
 
 void _OnButtonSelectorOk(){
-	// TODO:
-	//			- New image set containing only the selected images
-	// 		- Make a copy of the the selected textures into dynamic memory (SDL_Texture)
-	//			- Destroy the select container, freeing what is not used
-	//			- Append new images to the right type of tileset
+	CONTAINER **newTilesetContainer   = NULL;
+	SDL_FRect newTilesetContainerRect = {0};
+	for(size_t i = 0; i < newTileSet.tilesetImages.count; i++){
+		if(newTileSet.tilesetImages.items[i].isSelected){
+			// Old texture from the image list will be freed, so save it to newTexture
+			SDL_Texture *oldTexture = newTileSet.tilesetImages.items[i].texture;
+			SDL_Texture *newTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, oldTexture->w,oldTexture->h);
+			SDL_SetRenderTarget(renderer, newTexture);
+			SDL_RenderTexture(renderer, oldTexture, NULL, NULL);
+			SDL_SetRenderTarget(renderer, NULL);
+			
+			// Append new image to the tileset image dynamic array
+			image newImage = {0};
+			newImage.isVisible = true;
+			newImage.texture   = newTexture;
+
+			switch(newTileSet.type){
+				case WALL: {
+					DA_APPEND(newImage, (&wallTileset.tilesetImages));  
+					newTilesetContainer = &wallTilesetContainer;
+					newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 50, .w = WINDOW_WIDTH /2, .h = 70};
+				}break;
+				case FLOOR: {
+					DA_APPEND(newImage, (&floorTileset.tilesetImages)); 
+					newTilesetContainer = &floorTilesetContainer; 
+					newTilesetContainerRect = (SDL_FRect){.x = 1, .y = 120, .w = WINDOW_WIDTH /2, .h = 70};
+				}break;
+				case MISC: {
+					DA_APPEND(newImage, (&miscTileset.tilesetImages));  
+					newTilesetContainer = &miscTilesetContainer; 
+					newTilesetContainerRect = (SDL_FRect){.x = WINDOW_WIDTH/2, .y = 50, .w = WINDOW_WIDTH /2 - 1, .h = 140};
+				}break;
+				default: break;
+			}
+		}
+	}
+
+	DestroyContainer(selectContainer);
+	selectContainer = NULL;
+	
+	DestroyContainer(*newTilesetContainer);
+	*newTilesetContainer = NULL;
+	
+	*newTilesetContainer = InitContainer(newTilesetContainerRect.x, newTilesetContainerRect.y, 
+													newTilesetContainerRect.w, newTilesetContainerRect.h, TOP_LEFT);
+
+	
+	//AddImageList(uint16_t x, uint16_t y, uint8_t w, uint8_t h, size_t imagesCount, SDL_Texture **textures, CONTAINER *container);
+	//AddImageList(2, 2, tileWidth * 5, tileHeight * 2 * 2, count, textures, _OnSelectorChanged, *newTilesetContainer);
+	
 }
 
 void _OnSelectorChanged(images img){
@@ -300,5 +348,12 @@ static void _OnButtonGridSize(){
 void ExitLevel(){
 	DestroyGuiElements(NULL);
 	SDL_DestroyTexture(gridTargetTexture);
+	
+	DestroyContainer(wallTilesetContainer);
+	DestroyContainer(floorTilesetContainer);
+	DestroyContainer(miscTilesetContainer);
+	wallTilesetContainer  = NULL;
+	floorTilesetContainer = NULL;
+	miscTilesetContainer  = NULL;
 }
 

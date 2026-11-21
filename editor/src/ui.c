@@ -486,7 +486,7 @@ CONTAINER *InitContainer(uint16_t x, uint16_t y, uint16_t w, uint16_t h, origin 
 }
 
 void DestroyContainer(CONTAINER *container){
-	assert(container != NULL && "Trying to free a null container");
+	if(container == NULL) return;
 	DestroyGuiElements(container);
 }
 
